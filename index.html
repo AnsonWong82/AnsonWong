@@ -67,7 +67,13 @@
     .doc-block-body td { padding: 8px 12px; color: var(--color-text-secondary); border-bottom: 1px solid var(--color-border-subtle); font-weight: 300; line-height: 1.5; vertical-align: top; }
     .doc-block-body tr:last-child td { border-bottom: none; }
     code { font-family: var(--font-mono); font-size: 12px; background: var(--color-accent-light); border: 1px solid var(--color-border); border-radius: 3px; padding: 1px 5px; }
-    .doc-block-body img { width: 100%; max-width: 100%; border-radius: 6px; border: 1px solid var(--color-content-border); margin-top: 12px; display: block; }
+    .doc-block-body img { width: 100%; max-width: 100%; border-radius: 6px; border: 1px solid var(--color-content-border); margin-top: 12px; display: block; cursor: zoom-in; transition: opacity 0.15s; }
+    .doc-block-body img:hover { opacity: 0.9; }
+    .lightbox { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.75); z-index: 1000; align-items: center; justify-content: center; cursor: zoom-out; }
+    .lightbox.open { display: flex; }
+    .lightbox img { max-width: 90vw; max-height: 90vh; border-radius: 8px; box-shadow: 0 24px 64px rgba(0,0,0,0.4); object-fit: contain; cursor: zoom-out; }
+    .lightbox-close { position: fixed; top: 20px; right: 24px; color: #fff; font-size: 28px; cursor: pointer; opacity: 0.8; line-height: 1; background: none; border: none; font-family: var(--font-sans); }
+    .lightbox-close:hover { opacity: 1; }
     .bio-photo-wrapper { width: 100%; aspect-ratio: 1; border-radius: 8px; overflow: hidden; background: var(--color-accent-light); border: 1px solid var(--color-content-border); margin-bottom: 28px; display: flex; align-items: center; justify-content: center; }
     .bio-photo-wrapper img { width: 100%; height: 100%; object-fit: cover; display: block; }
     .bio-photo-placeholder { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; padding: 48px 24px; text-align: center; width: 100%; }
@@ -122,7 +128,7 @@
     </div>
     <div class="nav-section">
       <div class="nav-section-label">Experiences</div>
-      <button class="nav-item" onclick="load('channels',this)"><span class="nav-dot"></span>Session channels feature</button>
+      <button class="nav-item" onclick="load('channels',this)"><span class="nav-dot"></span>Sessions channels feature</button>
       <button class="nav-item" onclick="load('white-label',this)"><span class="nav-dot"></span>Preparing to white label your app</button>
       <button class="nav-item" onclick="load('translations',this)"><span class="nav-dot"></span>Translating text, buttons &amp; labels</button>
     </div>
@@ -140,7 +146,22 @@
   <div class="content"><div class="content-inner" id="content"></div></div>
 </div>
 
+  <div class="lightbox" id="lightbox" onclick="closeLightbox()">
+    <button class="lightbox-close" onclick="closeLightbox()">✕</button>
+    <img id="lightbox-img" src="" alt="" onclick="event.stopPropagation()" />
+  </div>
+
 <script>
+function openLightbox(src, alt) {
+  const lb = document.getElementById('lightbox');
+  document.getElementById('lightbox-img').src = src;
+  document.getElementById('lightbox-img').alt = alt;
+  lb.classList.add('open');
+}
+function closeLightbox() {
+  document.getElementById('lightbox').classList.remove('open');
+}
+document.addEventListener('keydown', e => { if(e.key === 'Escape') closeLightbox(); });
 const A = {
   'reg-categories': {
     c: { eyebrow:'Support Documentation · Registration', title:'Creating registration categories', tags:['Registration','Setup','Ticketing'],
@@ -258,9 +279,11 @@ const A = {
         {label:'Critical', badge:{text:'Warning',type:'warning'}, heading:'API Secret Key is shown once',
           body:`The API Secret Key is only displayed at generation time and cannot be retrieved afterwards. Store it securely immediately. Generating a new secret will disconnect all existing Zapier integrations — they will need to be re-authenticated.`},
         {label:'Step 02', badge:{text:'Setup',type:'tip'}, heading:'Connect PheedLoop in Zapier',
-          body:`In Zapier, open your Zap and select the PheedLoop action or trigger. Select <strong>Sign In</strong> and enter your Organization Code, API Key, and API Secret Key. Select <strong>Yes, Continue to PheedLoop</strong>.`},
+          body:`In Zapier, open your Zap and select the PheedLoop action or trigger. Select <strong>Sign In</strong> and enter your Organization Code, API Key, and API Secret Key. Select <strong>Yes, Continue to PheedLoop</strong>.
+<img src="images/zapier-step-02.png" alt="Connecting PheedLoop in Zapier" />`},
         {label:'Step 03', badge:{text:'Setup',type:'tip'}, heading:'Create a Zap',
-          body:`Navigate to <code>Settings > Integrations > Zapier > Get Started > Learn More</code> to open the Zapier interface. Review <strong>Popular With PheedLoop Users</strong> for common templates before building from scratch.`},
+          body:`Navigate to <code>Settings > Integrations > Zapier > Get Started > Learn More</code> to open the Zapier interface. Review <strong>Popular With PheedLoop Users</strong> for common templates before building from scratch.
+<img src="images/zapier-step-03.png" alt="Creating a Zap in Zapier" />`},
         {label:'Available triggers (sample)', badge:{text:'Reference',type:'note'},
           table:{headers:['Zap action','Description'], rows:[
             ['New Attendee Created','Triggers when an attendee is added to the event'],
@@ -290,7 +313,7 @@ const A = {
         {label:'Step 04 — Branding', badge:{text:'Setup',type:'tip'}, heading:'Configure branding and design',
           body:`Set <strong>Background</strong> to White. Toggle off <strong>Enable Fullscreen</strong> and <strong>Card Borders/Shadows</strong>. Set <strong>Process Text</strong> to Checkout and <strong>Cancel Text</strong> to Cancel or Back.`},
         {label:'Step 05', badge:{text:'Setup',type:'tip'}, heading:'Connect to PheedLoop',
-          body:`From the PheedLoop Event Dashboard, navigate to <code>Settings > Integrations > Moneris</code>. Enter the Checkout Profile ID, Store ID, and API Token. Select <strong>Save</strong>.`}
+          body:`From the PheedLoop Event Dashboard, navigate to <code>Settings > Integrations > Moneris</code>. Enter the Checkout Profile ID, Store ID, and API Token. Select <strong>Connect to Moneris</strong>.`}
       ]}
   },
 
@@ -307,9 +330,11 @@ const A = {
         {label:'Phase 1 — Wild Apricot', badge:{text:'Wild Apricot side',type:'tip'}, heading:'Configure your Wild Apricot account',
           body:`Navigate to <code>Apps > Authorized Applications</code> and select <strong>Authorize Application > User Authorization</strong>. Enter an application name, select <strong>Generate API Key</strong> (Read only), and note your <strong>Client ID</strong> and <strong>Client Secret</strong>.`},
         {label:'Critical', badge:{text:'Warning',type:'warning'}, heading:'Set the trusted redirect domain',
-          body:`Toggle on <strong>Authorize users via Wild Apricot single sign-on service</strong>. Under <strong>Trusted Redirect Domains</strong>, add <code>https://site.pheedloop.com/sso/redirect</code>. If using a custom domain, replace <code>site.pheedloop.com</code> with your domain. This step is required — SSO will not function without it.`},
+          body:`Toggle on <strong>Authorize users via Wild Apricot single sign-on service</strong>. Under <strong>Trusted Redirect Domains</strong>, add <code>https://site.pheedloop.com/sso/redirect</code>. If using a custom domain, replace <code>site.pheedloop.com</code> with your domain. This step is required — SSO will not function without it.
+<img src="images/wild-apricot-trusted-redirect.png" alt="Setting the trusted redirect domain in Wild Apricot" />`},
         {label:'Phase 2 — PheedLoop', badge:{text:'PheedLoop side',type:'tip'}, heading:'Connect Wild Apricot in PheedLoop',
-          body:`Navigate to <code>Settings > Integrations > Single Sign On Integrations</code> and select <strong>Not Connected</strong> under Wild Apricot. Enter your <strong>Client ID</strong>, <strong>Client Secret</strong>, and <strong>Authorization URL</strong>.`},
+          body:`Navigate to <code>Settings > Integrations > Single Sign On Integrations</code> and select <strong>Not Connected</strong> under Wild Apricot. Enter your <strong>Client ID</strong>, <strong>Client Secret</strong>, and <strong>Authorization URL</strong>.
+<img src="images/wild-apricot-pheedloop-connect.png" alt="Connecting Wild Apricot in PheedLoop SSO settings" />`},
         {label:'Authorization URL format', badge:{text:'Reference',type:'note'},
           body:`Format: <code>https://&lt;org_wildapricot_url&gt;/sys/login/OAuthLogin</code> — where <code>&lt;org_wildapricot_url&gt;</code> is your Wild Apricot website address. The <code>/sys/login/OAuthLogin</code> suffix is mandatory.`}
       ]}
@@ -328,11 +353,13 @@ const A = {
         {label:'What is a webhook?', badge:{text:'Concept',type:'note'},
           body:`A webhook sends data to an external URL automatically when a specific action occurs in PheedLoop. Unlike polling (repeatedly requesting data from an API), webhooks push data only when something happens — keeping external systems in sync efficiently.`},
         {label:'Step 01', badge:{text:'Setup',type:'tip'}, heading:'Retrieve webhook credentials',
-          body:`Navigate to <code>Advanced > Webhooks > Settings</code>. Copy the <strong>Event Code</strong>, <strong>Organization Code</strong>, and <strong>Webhook Secret</strong>. Use these to configure your endpoint to authenticate incoming payloads.`},
+          body:`Navigate to <code>Advanced > Webhooks > Settings</code>. Copy the <strong>Event Code</strong>, <strong>Organization Code</strong>, and <strong>Webhook Secret</strong>. Use these to configure your endpoint to authenticate incoming payloads.
+<img src="images/webhooks-setup-step-01.png" alt="Webhook credentials in the Event Dashboard" />`},
         {label:'Security', badge:{text:'Warning',type:'warning'},
           body:`The Webhook Secret must never be shared publicly. If compromised, select <strong>Generate New Secret</strong> — this invalidates the previous secret. Update your endpoint configuration immediately.`},
         {label:'Step 02', badge:{text:'Setup',type:'tip'}, heading:'Add a webhook',
-          body:`Navigate to <code>Advanced > Webhooks > Webhooks</code> and select <strong>Create</strong>. Under <strong>Resource</strong>, select the asset to monitor (attendees, registrations, check-ins). Under <strong>Action</strong>, select the trigger: create, update, or delete. Enter the endpoint <strong>URL</strong>. Select <strong>Save Changes</strong>.`},
+          body:`Navigate to <code>Advanced > Webhooks > Webhooks</code> and select <strong>Create</strong>. Under <strong>Resource</strong>, select the asset to monitor (attendees, registrations, check-ins). Under <strong>Action</strong>, select the trigger: create, update, or delete. Enter the endpoint <strong>URL</strong>. Select <strong>Save Changes</strong>.
+<img src="images/webhooks-setup-step-02.png" alt="Adding a webhook in the Event Dashboard" />`},
         {label:'Webhook log reference', badge:{text:'Reference',type:'note'},
           table:{headers:['Column','Description'], rows:[
             ['Event Name','The PheedLoop event — not the webhook event type'],
@@ -380,13 +407,13 @@ const A = {
           body:`A session can appear in the Channels section or the regular Sessions list — not both simultaneously. Sessions designated as channel sessions will not appear in the standard Sessions view.`},
         {label:'Step 01A', badge:{text:'Virtual Portal',type:'tip'}, heading:'Enable channels in the Virtual Portal',
           body:`Navigate to <code>Experiences > Virtual > Settings</code>. Under <strong>Options</strong>, toggle on <strong>Enable Channels Section</strong>. Select <strong>Save Changes</strong>.
-          <img src="images/channels-step-01a.png" alt="Enabling Channels in the Virtual Portal settings" />`},
+<img src="images/channels-step-01a.png" alt="Enabling Channels in the Virtual Portal settings" />`},
         {label:'Step 01B', badge:{text:'Mobile App',type:'tip'}, heading:'Enable channels in the Mobile App',
-         body:`Navigate to <code>Experiences > Mobile App > Pages</code>. Select <strong>Channels</strong> from the list. Toggle on <strong>Is Visible</strong>. Select <strong>Save Changes</strong>.
-        <img src="images/channels-step-01b.png" alt="Enabling Channels in the Mobile App pages" />`},
+          body:`Navigate to <code>Experiences > Mobile App > Pages</code>. Select <strong>Channels</strong> from the list. Toggle on <strong>Is Visible</strong>. Select <strong>Save Changes</strong>.
+<img src="images/channels-step-01b.png" alt="Enabling Channels in the Mobile App pages" />`},
         {label:'Step 02', badge:{text:'Setup',type:'tip'}, heading:'Designate sessions as channel sessions',
-         body:`Navigate to <code>Sessions > Sessions</code> and open the target session. Go to <strong>Virtual Settings</strong> and toggle on <strong>Channel Session</strong>. Select <strong>Save Changes</strong>. The session will move to the Channels navigation in both the Virtual Portal and Mobile App.
-         <img src="images/channels-step-02.png" alt="Designating a session as a channel session" />`},
+          body:`Navigate to <code>Sessions > Sessions</code> and open the target session. Go to <strong>Virtual Settings</strong> and toggle on <strong>Channel Session</strong>. Select <strong>Save Changes</strong>. The session will move to the Channels navigation in both the Virtual Portal and Mobile App.
+<img src="images/channels-step-02.png" alt="Designating a session as a channel session" />`},
         {label:'Common use cases', badge:{text:'Ideas',type:'note'}, list:['Separating English and French content tracks','Differentiating on-demand from live content','Separating breakout sessions from main sessions','Embedding a continuous RTMP stream with rotating speakers']}
       ]}
   },
@@ -508,7 +535,7 @@ const A = {
         {label:'URL changes', badge:{text:'Warning',type:'warning'},
           body:`Avoid changing article URLs wherever possible. Many are saved in CS team reply templates — URL changes break those references silently. If absolutely necessary, notify the CS team in advance. Newly created articles can have their URL set freely.`},
         {label:'Advanced tools', badge:{text:'Internal',type:'purple'}, heading:'Advanced tools',
-          body:`<strong>Pokedex:</strong> PheedLoop's master backend for organizations and events. Useful for configuring test events with different Power-Up combinations. Speak with Christian for access. <strong>Staging:</strong> A pre-release environment for testing upcoming features. Do not plan articles assuming staging behaviour is final. <strong>#cs-agent (HelpDraft):</strong> An internal AI that can parse the codebase. Use sparingly — it incurs cost. Always verify its answers manually in a test event. Do not share PII with it.`}
+          body:`<strong>Pokedex:</strong> PheedLoop's master backend for organizations and events. Useful for configuring test events with different Power-Up combinations. Speak with whoever is in accounting for instructions on adding event features.<br><br><strong>Staging:</strong> A pre-release environment for testing upcoming features. Do not plan articles assuming staging behaviour is final. Unlikely to be needed regularly, but useful to know.<br><br><strong>#cs-agent (HelpDraft):</strong> An internal AI that can parse the codebase. Use sparingly — it incurs cost. Always verify its answers manually in a test event. Do not share PII with it.`}
       ]}
   },
 
@@ -576,6 +603,9 @@ function load(id,btn){
       </div>`).join('')}`;
   document.querySelector('.content').scrollTop=0;
   document.querySelector('.commentary').scrollTop=0;
+  document.querySelectorAll('.doc-block-body img').forEach(img => {
+    img.onclick = () => openLightbox(img.src, img.alt);
+  });
 }
 
 function loadAbout(btn){
@@ -602,9 +632,9 @@ function loadAbout(btn){
       <h2>Anson Wong</h2>
     </div>
 
-<div class="bio-photo-wrapper">
-  <img src="images/anson.jpg" alt="Anson Wong" />
-</div>
+    <div class="bio-photo-wrapper">
+      <img src="images/anson.jpg" alt="Anson Wong" />
+    </div>
 
     <div class="bio-block">
       <h3>Background</h3>
