@@ -67,7 +67,8 @@
     .doc-block-body td { padding: 8px 12px; color: var(--color-text-secondary); border-bottom: 1px solid var(--color-border-subtle); font-weight: 300; line-height: 1.5; vertical-align: top; }
     .doc-block-body tr:last-child td { border-bottom: none; }
     code { font-family: var(--font-mono); font-size: 12px; background: var(--color-accent-light); border: 1px solid var(--color-border); border-radius: 3px; padding: 1px 5px; }
-    .doc-block-body img { width: 100%; max-width: 100%; border-radius: 6px; border: 1px solid var(--color-content-border); margin-top: 12px; display: block; }
+    .doc-block-body img { width: 100%; max-width: 100%; border-radius: 6px; border: 1px solid var(--color-content-border); margin-top: 12px; display: block; transition: transform 0.2s ease, box-shadow 0.2s ease; cursor: zoom-in; }
+    .doc-block-body img:hover { transform: scale(1.5); box-shadow: 0 8px 32px rgba(0,0,0,0.15); position: relative; z-index: 10; }
     .bio-photo-wrapper { width: 100%; aspect-ratio: 1; border-radius: 8px; overflow: hidden; background: var(--color-accent-light); border: 1px solid var(--color-content-border); margin-bottom: 28px; display: flex; align-items: center; justify-content: center; }
     .bio-photo-wrapper img { width: 100%; height: 100%; object-fit: cover; display: block; }
     .bio-photo-placeholder { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; padding: 48px 24px; text-align: center; width: 100%; }
