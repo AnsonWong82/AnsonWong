@@ -309,16 +309,38 @@ const A = {
       blocks:[
         {label:'Overview', body:`Epson badge printing offers professional, full-colour on-demand printing at attendee check-in. Unlike Zebra thermal printers, Epson printers require ink cartridges and a maintenance box installed at the venue before use. Epson printing is only available through <strong>PheedLoop OnSite</strong>.`},
         {label:'Critical requirement', badge:{text:'Warning',type:'warning'}, heading:'Network setup',
-          body:`Both iPads (wireless) and Epson printers (wired via Ethernet) must be on the same network. This is the most common cause of printing failures. Confirm with the venue's IT team before event day.`},
-        {label:'Hardware included per kiosk', list:['1 Epson CW4000U printer','4 ink cartridges (Cyan, Magenta, Yellow, Black)','1 Maintenance Box','1 TP-Link WiFi 6 router per every 4 printers','2 iPads and stands']},
-        {label:'Step 01', badge:{text:'Setup',type:'tip'}, heading:'Install ink and maintenance box',
-          body:`The printer will not operate until both the Maintenance Box and all four ink cartridges are installed. Do this at the venue before any test prints. Ink yield is approximately 500 prints per cartridge set at 25% colour coverage.`},
-        {label:'Step 02', badge:{text:'Setup',type:'tip'}, heading:'Connect to the dedicated network',
-          body:`Connect each Epson printer to the TP-Link router via Ethernet. Connect iPads to the same router via Wi-Fi. Do not connect iPads to the venue's general Wi-Fi — use only the dedicated router included in the kiosk kit.`},
-        {label:'Step 03', badge:{text:'Setup',type:'tip'}, heading:'Pair via PheedLoop OnSite',
-          body:`Open <strong>PheedLoop OnSite</strong> on an iPad. Navigate to <code>Check In > Settings > Add or Edit Printers</code> and select <strong>Epson</strong>. Follow the on-screen pairing steps, then send a test badge to confirm the connection.`},
-        {label:'Note', badge:{text:'Info',type:'note'},
-          body:`If any hardware is missing from your kiosk kit, contact <code>logistics@pheedloop.com</code> before your event. Do not substitute hardware not included in the kit.`}
+          body:`Both iPads (wireless) and Epson printers (wired via Ethernet) must be on the same network. This is the most common cause of printing failures. Confirm with the venue's IT team before event day. There is no workaround to this requirement.`},
+        {label:'Hardware included per kiosk', list:[
+          '1 Epson CW4000U printer, power adaptor (42V DC), and Wi-Fi dongle',
+          '4 ink cartridges (Cyan, Magenta, Yellow, Black)',
+          '1 Maintenance Box',
+          '1 TP-Link AX1500 Archer Wi-Fi 6 router per every 4 printers, plus Ethernet cables',
+          '2 iPads, iPad stands, and USB-C charging cables'
+        ]},
+        {label:'Ink yield', badge:{text:'Info',type:'note'},
+          body:`Ink cartridges yield approximately 500 prints at 25% colour coverage. As an example: an event with 500 attendees and 2 Epson printers will receive 8 ink cartridges and 2 Maintenance Boxes. Monitor ink levels regularly during the event to prevent interruptions.`},
+        {label:'Step 01', badge:{text:'Setup',type:'tip'}, heading:'Install the Maintenance Box',
+          body:`The Maintenance Box captures discarded ink and must be installed before the printer will operate. Pull the access panel on the far left of the Epson printer. Insert the Maintenance Box with the aluminum foil facing outward and the chip oriented upward. Close the cover once inserted.`},
+        {label:'Step 02', badge:{text:'Setup',type:'tip'}, heading:'Install ink cartridges',
+          body:`Gently pull the compartment below the touchpad to open the ink bay. Insert cartridges in the order marked on the machine — you will hear a click confirming each is seated correctly. Ink levels will display automatically on the printer screen. To remove a cartridge, push the latch to the right of the slot inward.`},
+        {label:'Step 03', badge:{text:'Setup',type:'tip'}, heading:'Connect printers and iPads to the router',
+          body:`Power on the TP-Link router. Connect the venue's internet source (e.g. modem) to the <strong>blue WAN port</strong>. Connect each Epson printer via Ethernet to any of the <strong>orange LAN ports</strong>. Connect iPads to the router's Wi-Fi network (displayed as "PheedLoop Print" — password shared privately). iPads should connect automatically.`},
+        {label:'Step 04', badge:{text:'Setup',type:'tip'}, heading:'Feed badges into the printer',
+          body:`Ensure the badge stock is facing the correct direction — the ink side with instructions facing <strong>downward</strong>. Lift the hatch at the back of the printer and pull the grey latch at the front feeder to unlock it. Open the grey handle at the front. Feed badges gently, leaving at least one inch sticking out at the front. Close the printer — some badge stock will protrude. Press the pause button to resume; the printer will calibrate automatically.`},
+        {label:'Step 05', badge:{text:'Setup',type:'tip'}, heading:'Connect to PheedLoop OnSite',
+          body:`Open <strong>PheedLoop OnSite</strong> on an iPad and log in with staff credentials. Select <strong>Check In > Settings (⚙️) > Add or Edit Printers > Epson printer</strong>. Under <strong>Other Devices</strong>, select <strong>Connect the Epson printer</strong> and select your printer by its serial number (found on a sticker on the back of the unit). Select <strong>OK</strong> then <strong>Confirm</strong>. Conduct a test print to confirm the connection.`},
+        {label:'Manual calibration', badge:{text:'Reference',type:'note'}, heading:'Calibrating the printer manually',
+          body:`If badges are cutting incorrectly, navigate to <code>Menu > Maintenance > Calibration > Media Detect > Start</code> on the printer's touchscreen. The printer will move the badge stock through as part of the calibration process.`},
+        {label:'Print quality', badge:{text:'Reference',type:'note'}, heading:'Print quality settings',
+          body:`In PheedLoop OnSite printer settings, set print quality to <strong>Speed</strong> for most events — this balances badge quality with ink efficiency and keeps lines moving. Switch to <strong>Quality</strong> mode for VIP badges. Avoid <strong>Max Speed</strong> or <strong>Max Quality</strong> — these extreme settings are not recommended for typical event use.`},
+        {label:'FAQ', badge:{text:'Info',type:'note'}, heading:'Frequently asked questions',
+          list:[
+            'Multiple printers can be connected to one iPad — each will appear in the "My Devices" list and can be selected per print job',
+            'Replace ink when any colour drops below 25% — proactive swaps prevent mid-event interruptions',
+            'If the printer is not discovered on the network, ensure Allow Local Network is enabled for PheedLoop OnSite in iPad Settings, then restart the app and printer'
+          ]},
+        {label:'Getting help', badge:{text:'Info',type:'note'},
+          body:`For urgent event-day support, contact <code>logistics@pheedloop.com</code>. For returns, use the Kiosk Pickup Request Form, drop off at a UPS store, or leave with a venue UPS partner. Affix all return labels before shipping.`}
       ]}
   },
 
@@ -332,17 +354,35 @@ const A = {
     content: { type:'Support Article', title:'Epson printer not working: step-by-step help',
       blocks:[
         {label:'How to use this article', body:`Find the scenario matching your issue in the index and navigate to it. Use <code>Ctrl+F</code> to search for exact error messages. If your issue is not listed, contact <code>logistics@pheedloop.com</code>.`},
-        {label:'Index', list:['Error on the iPad when sending to print','Badges printing but not cutting at the correct spot','Ink not aligned correctly when printing','Printer is "cleaning" itself','Ink cartridges or maintenance box running low','Printer not showing in available printers list','Epson printer appearing offline on the dashboard','Epson printer "double-printing" badges','Printer taking a long time per badge']},
+        {label:'Index', list:[
+          'Error on the iPad when sending to print',
+          'Badges printing but not cutting at the correct spot',
+          'Ink not aligned correctly when printing',
+          'Printer is "cleaning" itself',
+          'Ink cartridges or maintenance box running low',
+          'Printer not showing in available printers list',
+          'Epson printer appearing offline on the dashboard',
+          'Epson printer "double-printing" badges',
+          'Printer taking a long time per badge'
+        ]},
         {label:'iPad error', badge:{text:'Common',type:'tip'}, heading:'Error on the iPad when sending to print',
-          body:`Two causes. <strong>Printer Offline:</strong> confirm the printer status is Online in the Event Dashboard. In PheedLoop OnSite, verify the Epson is connected in check-in settings. <strong>Attendee Not Permitted to Print this Template:</strong> the attendee lacks the Connected Tag associated with the badge template. Manually assign the correct tag, then refresh the app. If the issue affects multiple attendees, remove the connected tag requirement from the template or create a duplicate without it.`},
+          body:`There are two possible causes. <strong>Printer Offline:</strong> open the Event Dashboard and confirm the printer status appears as Online. In PheedLoop OnSite, verify the Epson is connected in check-in settings. <strong>Attendee Not Permitted to Print this Template:</strong> the attendee lacks the Connected Tag associated with the badge template. Manually assign the correct tag, then refresh the app. If the issue affects multiple attendees, remove the connected tag requirement from the template or create a duplicate without it. If the issue persists, navigate to <code>OnSite > Badges & Printers > Badge Printers</code> and check the <strong>Templates</strong> field on the printer.`},
         {label:'Cut alignment', badge:{text:'Common',type:'tip'}, heading:'Badges not cutting at the correct spot',
-          body:`Occurs after a badge reload or printer jam. Resolved by <strong>calibrating the printer</strong>. Refer to the Epson setup article for calibration instructions.`},
+          body:`This occurs after a badge reload, printer jam, or if the printer did not calibrate properly after restocking. Resolve by calibrating the printer manually: navigate to <code>Menu > Maintenance > Calibration > Media Detect > Start</code> on the printer touchscreen. To fine-tune the cut position in PheedLoop OnSite: print a test badge, then adjust the cut position setting by increments of 5 (enter -5 if cutting too high, +5 if cutting too low) until correct.`},
         {label:'Print alignment', badge:{text:'Common',type:'tip'}, heading:'Ink not aligned correctly',
-          body:`Adjust the <strong>Vertical Print Position Adjustment</strong> and <strong>Horizontal Print Position Adjustment</strong> in PheedLoop OnSite: <code>Check In > Settings > Add or Edit Printers > Epson printer > device info icon</code>.`},
+          body:`White space at badge edges indicates the print position is offset. Adjust the <strong>Vertical Print Position Adjustment</strong> and <strong>Horizontal Print Position Adjustment</strong> in PheedLoop OnSite printer settings: <code>Check In > Settings (⚙️) > Add or Edit Printers > Epson printer > ⓘ icon</code>.`},
         {label:'Self-cleaning', badge:{text:'Info',type:'note'}, heading:'Printer is "cleaning" itself',
-          body:`Epson printers perform automatic head cleaning cycles — this is normal and cannot be disabled. Frequent cleaning may indicate low ink levels.`},
-        {label:'Ink levels', badge:{text:'Warning',type:'warning'}, heading:'Ink or maintenance box running low',
-          body:`Monitor ink levels throughout the event. A depleted maintenance box halts all printing. Replacements must be pre-ordered — they are not available as on-site replacements. Contact <code>logistics@pheedloop.com</code> if you anticipate running low before your event.`}
+          body:`Epson printers perform automatic head cleaning cycles — this is normal behaviour and cannot be disabled. Frequent cleaning cycles may indicate low ink levels. Check ink levels on the printer display and replace any cartridge below 25%.`},
+        {label:'Ink levels', badge:{text:'Warning',type:'warning'}, heading:'Ink cartridges or maintenance box running low',
+          body:`Monitor ink levels throughout the event — the printer display shows real-time levels. Replace any colour below 25% proactively rather than waiting for it to run out mid-event. A depleted maintenance box will halt all printing. Replacement cartridges and maintenance boxes must be pre-ordered and cannot be sourced on-site. Contact <code>logistics@pheedloop.com</code> if you anticipate running low before your event.`},
+        {label:'Printer not found', badge:{text:'Common',type:'tip'}, heading:'Printer not showing in available printers list',
+          body:`Try these steps in order: confirm both the iPad and printer are on the same Wi-Fi network; ensure <strong>Allow Local Network</strong> is enabled for PheedLoop OnSite under iPad Settings; close and reopen the PheedLoop OnSite app; turn the printer off and back on. If the printer still does not appear, the venue network may have security settings blocking device discovery — contact the venue's IT team and request the printer be whitelisted on the network.`},
+        {label:'Printer offline', badge:{text:'Common',type:'tip'}, heading:'Epson printer appearing offline on the dashboard',
+          body:`An offline status typically indicates a network connectivity issue. Verify the Ethernet cable is securely connected to both the printer and the router's orange LAN port. Confirm the router is powered on and the blue WAN port is connected to the venue's internet source. Restart the printer and check the dashboard status again. If using the Wi-Fi dongle instead of Ethernet, ensure the printer is within 25 feet of the router.`},
+        {label:'Double-printing', badge:{text:'Less common',type:'warning'}, heading:'Epson printer "double-printing" badges',
+          body:`Double-printing (a blank badge following each printed badge before cutting) is caused by badge stock miscalibration. Resolve using the following steps in order: recalibrate the printer manually via <code>Menu > Maintenance > Calibration > Media Detect > Start</code>; in PheedLoop OnSite printer settings, change <strong>Custom Height (mm)</strong> from 3600 to 3590; swap the badge stock to a different printer to isolate whether the issue is the stock or the printer's settings. If the issue persists across all printers, contact <code>logistics@pheedloop.com</code>.`},
+        {label:'Slow printing', badge:{text:'Info',type:'note'}, heading:'Printer taking a long time per badge',
+          body:`Slow print times are usually caused by print quality settings. In PheedLoop OnSite printer settings, set print quality to <strong>Speed</strong> — this is the recommended setting for most events and significantly reduces print time. Avoid <strong>Max Quality</strong> mode during high-volume events. Also confirm the printer and iPad are on the same dedicated router rather than the venue's general Wi-Fi, as network latency can add delay.`}
       ]}
   },
 
