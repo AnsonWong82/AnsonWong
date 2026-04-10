@@ -1,4 +1,4 @@
-[README.md](https://github.com/user-attachments/files/26632282/README.md)
+[README.md](https://github.com/user-attachments/files/26632439/README.md)
 # Anson Wong — Technical Writing Portfolio
 
 A single-page technical writing portfolio built to mirror the look and feel of API documentation. Hosted on GitHub Pages.
@@ -96,6 +96,18 @@ python3 -m http.server 8000
 
 Pushes to the default branch are published automatically via GitHub Pages.
 
-## License
+## License & usage
 
-Article content is © PheedLoop and linked back to the original source on the PheedLoop Knowledge Base. Site code is provided as-is for portfolio purposes.
+**All rights reserved.** This repository is published publicly so prospective employers and collaborators can view Anson Wong's technical writing portfolio. It is **not** open source, and nothing in this repository is licensed for reuse.
+
+Please do not, without prior written permission from Anson Wong:
+
+- Copy, republish, or redistribute any of the writing samples, commentary, annotations, or other written content found on this site or in this repository
+- Reuse the site's HTML, CSS, or JavaScript code in your own projects
+- Use any of the screenshots, images, or the bio photo (`images/anson.jpg`)
+- Train machine learning models on the contents of this repository
+- Present any of this work as your own in a portfolio, application, or published work
+
+The PheedLoop Knowledge Base articles linked from this site remain © PheedLoop and are reproduced here in portfolio form with attribution and links back to the original sources. The internal samples (Style Guide, Keyword Framework) and the PheedLoop OpenAPI specification are original work by Anson Wong.
+
+If you'd like to reference, quote, or reuse anything here, please reach out first: **Ansonwong474@gmail.com**.
