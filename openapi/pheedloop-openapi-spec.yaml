@@ -1,0 +1,4015 @@
+openapi: 3.1.0
+info:
+  title: PheedLoop API
+  version: 3.3.0
+  summary: Unoffical OpenAPI specification for interacting with the PheedLoop REST
+    API. This API enables access to event management data including events, attendees,
+    registrations, and more. This OpenAPI specification document is not associated
+    with PheedLoop in any matter and is only used as part of my work portfolio. If
+    you are looking to test this code directly, simply copy and paste this entire
+    code into https://editor.swagger.io/
+  description: 'The **PheedLoop API** (v3) enables programmatic access to the
+
+    PheedLoop event management platform. It supports full CRUD
+
+    operations across the core PheedLoop data model, including:
+
+
+    - **Events** — retrieve and update event configuration
+
+    - **Attendees & Members** — create, update, delete, and bulk-manage contacts
+
+    - **Sessions** — manage the event agenda, formats, and session registrations
+
+    - **Exhibitors & Sponsors** — manage company profiles, booths, tiers, and promotions
+
+    - **Speakers** — manage speaker profiles and tagging
+
+    - **Announcements** — create and distribute communications to targeted audiences
+
+    - **Registrations & Tickets** — read registration and ticket purchase data
+
+    - **Reports** — retrieve paginated report data exports
+
+    - **REST Hooks** — subscribe to platform webhook events
+
+
+    ### Authentication
+
+    All requests must include two custom headers:
+
+
+    | Header | Description |
+
+    |---|---|
+
+    | `X-API-KEY` | Your organization''s API key |
+
+    | `X-API-SECRET` | Your organization''s API secret |
+
+
+    API credentials are generated from within the PheedLoop dashboard
+
+    under **Settings → Integrations → API**.
+
+
+    ### Base URL structure
+
+    All endpoints follow the pattern:
+
+    ```
+
+    https://develop.pheedloop.com/api/v3/organization/{organizationCode}/...
+
+    ```
+
+
+    ### Pagination
+
+    List endpoints support `page` and `page_size` query parameters.
+
+    Responses include `count`, `next`, and `previous` fields for
+
+    cursor-based navigation.
+
+
+    ### Bulk operations
+
+    Several resources support bulk create and bulk update via
+
+    dedicated endpoints that accept a JSON array as the request body.
+
+
+    ### Notes on this specification
+
+    This OpenAPI 3.1.0 specification was authored by Anson Lau based
+
+    on the PheedLoop Postman collection (v3.3.0). It documents the
+
+    publicly available API as part of a technical writing portfolio.
+
+    It is not an official PheedLoop publication.
+
+    '
+  contact:
+    name: PheedLoop Support
+    url: https://help.pheedloop.com
+    email: support@pheedloop.com
+  termsOfService: https://pheedloop.com/terms
+servers:
+- url: https://develop.pheedloop.com/api/v3
+  description: PheedLoop production API server (v3)
+paths:
+  /organization/{organizationCode}/validateauth/:
+    get:
+      summary: Validate authentication credentials
+      description: 'Verifies that the supplied `X-API-KEY` and `X-API-SECRET`
+
+        headers are valid for the given organization. Returns the
+
+        organization name and code on success.
+
+        '
+      operationId: validateAuth
+      tags:
+      - Authentication
+      security:
+      - ApiKeyAuth: []
+      parameters:
+      - $ref: '#/components/parameters/organizationCode'
+      responses:
+        '200':
+          description: Credentials are valid
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  organization_name:
+                    type: string
+                    examples:
+                    - Acme Events Inc.
+                  response:
+                    type: string
+                    examples:
+                    - Authentication successful.
+                  organization_code:
+                    type: string
+                    examples:
+                    - ORGABCDE12345
+        '403':
+          $ref: '#/components/responses/Forbidden'
+  /organization/{organizationCode}/events/:
+    get:
+      summary: List events
+      description: Returns all events associated with the organization.
+      operationId: listEvents
+      tags:
+      - Events
+      security:
+      - ApiKeyAuth: []
+      parameters:
+      - $ref: '#/components/parameters/organizationCode'
+      - $ref: '#/components/parameters/fields'
+      - $ref: '#/components/parameters/pageSize'
+      - $ref: '#/components/parameters/page'
+      responses:
+        '200':
+          description: Paginated list of events
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedEventList'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+  /organization/{organizationCode}/events/{eventCode}/:
+    get:
+      summary: Get single event
+      description: Returns the full details of a single event.
+      operationId: getEvent
+      tags:
+      - Events
+      security:
+      - ApiKeyAuth: []
+      parameters:
+      - $ref: '#/components/parameters/organizationCode'
+      - $ref: '#/components/parameters/eventCode'
+      - $ref: '#/components/parameters/fields'
+      responses:
+        '200':
+          description: Event object
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Event'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    patch:
+      summary: Update event
+      description: 'Updates one or more fields on an existing event.
+
+        Partial updates are supported — only include the fields
+
+        you wish to change.
+
+        '
+      operationId: updateEvent
+      tags:
+      - Events
+      security:
+      - ApiKeyAuth: []
+      parameters:
+      - $ref: '#/components/parameters/organizationCode'
+      - $ref: '#/components/parameters/eventCode'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                custom_fields:
+                  type: object
+                  description: Key-value pairs for custom event fields.
+                  examples:
+                  - {}
+      responses:
+        '200':
+          description: Updated event object
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Event'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+  /organization/{organizationCode}/events/{eventCode}/attendees/:
+    post:
+      summary: Create attendee
+      description: 'Creates a single attendee and registers them to the event.
+
+        Optionally sends a welcome email to the attendee''s address.
+
+        '
+      operationId: createAttendee
+      tags:
+      - Attendees
+      security:
+      - ApiKeyAuth: []
+      parameters:
+      - $ref: '#/components/parameters/organizationCode'
+      - $ref: '#/components/parameters/eventCode'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AttendeeWrite'
+            examples:
+              sample_attendee:
+                value:
+                  email: jeffbezos@amazon.com
+                  first_name: Jeff
+                  last_name: Bezos
+                  about: CEO and space traveller.
+                  title: CEO & Space Tourist
+                  organization: Amazon
+                  address_line_1: 440 Terry Avenue North
+                  address_city: Seattle
+                  address_state: WA
+                  address_zip: '98109'
+                  address_country: United States
+                  address_phone: 206-266-1000
+                  dietary_restrictions: Vegan
+                  designations: He/Him
+                  send_app_welcome_email: true
+                  send_attendee_portal_welcome: true
+                  tags:
+                  - TAGJFOPSTYT
+      responses:
+        '201':
+          description: Attendee created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Attendee'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+    get:
+      summary: List attendees
+      description: Returns all attendees registered to the event.
+      operationId: listAttendees
+      tags:
+      - Attendees
+      security:
+      - ApiKeyAuth: []
+      parameters:
+      - $ref: '#/components/parameters/organizationCode'
+      - $ref: '#/components/parameters/eventCode'
+      - $ref: '#/components/parameters/fields'
+      - $ref: '#/components/parameters/pageSize'
+      - $ref: '#/components/parameters/page'
+      responses:
+        '200':
+          description: Paginated list of attendees
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedAttendeeList'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+  /organization/{organizationCode}/events/{eventCode}/attendeesbulk/:
+    post:
+      summary: Bulk create attendees
+      description: 'Creates multiple attendees in a single request.
+
+        The request body must be a JSON array of attendee objects.
+
+        Returns an array of created attendee records.
+
+        '
+      operationId: bulkCreateAttendees
+      tags:
+      - Attendees
+      security:
+      - ApiKeyAuth: []
+      parameters:
+      - $ref: '#/components/parameters/organizationCode'
+      - $ref: '#/components/parameters/eventCode'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: '#/components/schemas/AttendeeWrite'
+      responses:
+        '201':
+          description: Attendees created successfully
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Attendee'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+    patch:
+      summary: Bulk update attendees
+      description: 'Updates multiple attendees in a single request.
+
+        Each object in the array must include the attendee `code`.
+
+        '
+      operationId: bulkUpdateAttendees
+      tags:
+      - Attendees
+      security:
+      - ApiKeyAuth: []
+      parameters:
+      - $ref: '#/components/parameters/organizationCode'
+      - $ref: '#/components/parameters/eventCode'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                allOf:
+                - $ref: '#/components/schemas/AttendeeWrite'
+                - type: object
+                  required:
+                  - code
+                  properties:
+                    code:
+                      type: string
+                      description: Unique attendee code to identify the record to
+                        update.
+      responses:
+        '200':
+          description: Attendees updated successfully
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Attendee'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+    delete:
+      summary: Bulk delete attendees
+      description: Deletes multiple attendees by code.
+      operationId: bulkDeleteAttendees
+      tags:
+      - Attendees
+      security:
+      - ApiKeyAuth: []
+      parameters:
+      - $ref: '#/components/parameters/organizationCode'
+      - $ref: '#/components/parameters/eventCode'
+      - name: codes
+        in: query
+        required: true
+        description: Comma-separated list of codes to delete.
+        schema:
+          type: array
+          items:
+            type: string
+        style: form
+        explode: true
+      responses:
+        '204':
+          description: Attendees deleted successfully
+        '403':
+          $ref: '#/components/responses/Forbidden'
+  /organization/{organizationCode}/events/{eventCode}/attendees/{attendeeCode}/:
+    get:
+      summary: Get single attendee
+      description: Returns the full record for a single event attendee.
+      operationId: getAttendee
+      tags:
+      - Attendees
+      security:
+      - ApiKeyAuth: []
+      parameters:
+      - $ref: '#/components/parameters/organizationCode'
+      - $ref: '#/components/parameters/eventCode'
+      - $ref: '#/components/parameters/attendeeCode'
+      - $ref: '#/components/parameters/fields'
+      responses:
+        '200':
+          description: Attendee object
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Attendee'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    patch:
+      summary: Update attendee
+      description: Partially updates a single attendee record.
+      operationId: updateAttendee
+      tags:
+      - Attendees
+      security:
+      - ApiKeyAuth: []
+      parameters:
+      - $ref: '#/components/parameters/organizationCode'
+      - $ref: '#/components/parameters/eventCode'
+      - $ref: '#/components/parameters/attendeeCode'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AttendeeWrite'
+      responses:
+        '200':
+          description: Updated attendee object
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Attendee'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+    delete:
+      summary: Delete attendee
+      description: Permanently deletes a single attendee from the event.
+      operationId: deleteAttendee
+      tags:
+      - Attendees
+      security:
+      - ApiKeyAuth: []
+      parameters:
+      - $ref: '#/components/parameters/organizationCode'
+      - $ref: '#/components/parameters/eventCode'
+      - $ref: '#/components/parameters/attendeeCode'
+      responses:
+        '204':
+          description: Attendee deleted successfully
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /organization/{organizationCode}/events/{eventCode}/attendance/:
+    get:
+      summary: Get event attendance
+      description: Returns check-in and check-out records for the event.
+      operationId: getEventAttendance
+      tags:
+      - Event Attendance
+      security:
+      - ApiKeyAuth: []
+      parameters:
+      - $ref: '#/components/parameters/organizationCode'
+      - $ref: '#/components/parameters/eventCode'
+      responses:
+        '200':
+          description: Attendance records
+          content:
+            application/json:
+              schema:
+                type: object
+  /organization/{organizationCode}/events/{eventCode}/checkin/:
+    post:
+      summary: Check in attendee(s)
+      description: 'Marks one or more attendees as checked in to the event.
+
+        Accepts an array of attendee codes.
+
+        '
+      operationId: eventCheckIn
+      tags:
+      - Event Attendance
+      security:
+      - ApiKeyAuth: []
+      parameters:
+      - $ref: '#/components/parameters/organizationCode'
+      - $ref: '#/components/parameters/eventCode'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - codes
+              properties:
+                codes:
+                  type: array
+                  items:
+                    type: string
+                  description: Attendee codes to check in.
+                  examples:
+                  - - ATTABC123
+      responses:
+        '200':
+          description: Check-in recorded
+        '400':
+          $ref: '#/components/responses/BadRequest'
+  /organization/{organizationCode}/events/{eventCode}/checkout/:
+    delete:
+      summary: Check out attendee(s)
+      description: Marks one or more attendees as checked out of the event.
+      operationId: eventCheckOut
+      tags:
+      - Event Attendance
+      security:
+      - ApiKeyAuth: []
+      parameters:
+      - $ref: '#/components/parameters/organizationCode'
+      - $ref: '#/components/parameters/eventCode'
+      - name: codes
+        in: query
+        required: true
+        description: Comma-separated list of codes to delete.
+        schema:
+          type: array
+          items:
+            type: string
+        style: form
+        explode: true
+      responses:
+        '200':
+          description: Check-out recorded
+  /organization/{organizationCode}/events/{eventCode}/sessions/:
+    post:
+      summary: Create session
+      description: Creates a new agenda session for the event.
+      operationId: createSession
+      tags:
+      - Sessions
+      security:
+      - ApiKeyAuth: []
+      parameters:
+      - $ref: '#/components/parameters/organizationCode'
+      - $ref: '#/components/parameters/eventCode'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SessionWrite'
+            examples:
+              sample_session:
+                value:
+                  title: Opening Keynote
+                  sub_title: The future of event technology
+                  about: A deep dive into event tech trends for 2025.
+                  location: Main Hall
+                  session_date: '2025-09-15'
+                  start_time: 09:00:00
+                  end_time: '10:00:00'
+                  credit_value: 1.0
+                  is_channel: false
+      responses:
+        '201':
+          description: Session created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Session'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+    get:
+      summary: List sessions
+      description: Returns all sessions for the event.
+      operationId: listSessions
+      tags:
+      - Sessions
+      security:
+      - ApiKeyAuth: []
+      parameters:
+      - $ref: '#/components/parameters/organizationCode'
+      - $ref: '#/components/parameters/eventCode'
+      - $ref: '#/components/parameters/fields'
+      - $ref: '#/components/parameters/pageSize'
+      - $ref: '#/components/parameters/page'
+      responses:
+        '200':
+          description: Paginated list of sessions
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedSessionList'
+  /organization/{organizationCode}/events/{eventCode}/sessions/{sessionCode}/:
+    get:
+      summary: Get single session
+      description: Returns the full record for a single session.
+      operationId: getSession
+      tags:
+      - Sessions
+      security:
+      - ApiKeyAuth: []
+      parameters:
+      - $ref: '#/components/parameters/organizationCode'
+      - $ref: '#/components/parameters/eventCode'
+      - $ref: '#/components/parameters/sessionCode'
+      - $ref: '#/components/parameters/fields'
+      responses:
+        '200':
+          description: Session object
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Session'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    patch:
+      summary: Update session
+      description: Partially updates a session record.
+      operationId: updateSession
+      tags:
+      - Sessions
+      security:
+      - ApiKeyAuth: []
+      parameters:
+      - $ref: '#/components/parameters/organizationCode'
+      - $ref: '#/components/parameters/eventCode'
+      - $ref: '#/components/parameters/sessionCode'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SessionWrite'
+      responses:
+        '200':
+          description: Updated session object
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Session'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+    delete:
+      summary: Delete session
+      description: Permanently deletes a session.
+      operationId: deleteSession
+      tags:
+      - Sessions
+      security:
+      - ApiKeyAuth: []
+      parameters:
+      - $ref: '#/components/parameters/organizationCode'
+      - $ref: '#/components/parameters/eventCode'
+      - $ref: '#/components/parameters/sessionCode'
+      responses:
+        '204':
+          description: Session deleted
+  /organization/{organizationCode}/events/{eventCode}/sessions/{sessionCode}/attendance/:
+    post:
+      summary: Add session registration
+      description: Registers one or more attendees to a session.
+      operationId: addSessionRegistration
+      tags:
+      - Sessions
+      security:
+      - ApiKeyAuth: []
+      parameters:
+      - $ref: '#/components/parameters/organizationCode'
+      - $ref: '#/components/parameters/eventCode'
+      - $ref: '#/components/parameters/sessionCode'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - codes
+              properties:
+                codes:
+                  type: array
+                  items:
+                    type: string
+                  description: Attendee codes to register to this session.
+      responses:
+        '201':
+          description: Session registrations added
+        '400':
+          $ref: '#/components/responses/BadRequest'
+    get:
+      summary: Get session registrations
+      description: Returns all attendee registrations for a session.
+      operationId: getSessionRegistrations
+      tags:
+      - Sessions
+      security:
+      - ApiKeyAuth: []
+      parameters:
+      - $ref: '#/components/parameters/organizationCode'
+      - $ref: '#/components/parameters/eventCode'
+      - $ref: '#/components/parameters/sessionCode'
+      responses:
+        '200':
+          description: Session registration list
+          content:
+            application/json:
+              schema:
+                type: object
+    patch:
+      summary: Bulk edit session registrations
+      description: Updates registrations for multiple attendees on a session.
+      operationId: bulkEditSessionRegistrations
+      tags:
+      - Sessions
+      security:
+      - ApiKeyAuth: []
+      parameters:
+      - $ref: '#/components/parameters/organizationCode'
+      - $ref: '#/components/parameters/eventCode'
+      - $ref: '#/components/parameters/sessionCode'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - codes
+              properties:
+                codes:
+                  type: array
+                  items:
+                    type: string
+      responses:
+        '200':
+          description: Session registrations updated
+    delete:
+      summary: Bulk delete session registrations
+      description: Removes multiple attendees from a session.
+      operationId: bulkDeleteSessionRegistrations
+      tags:
+      - Sessions
+      security:
+      - ApiKeyAuth: []
+      parameters:
+      - $ref: '#/components/parameters/organizationCode'
+      - $ref: '#/components/parameters/eventCode'
+      - $ref: '#/components/parameters/sessionCode'
+      - name: codes
+        in: query
+        required: true
+        description: Comma-separated list of codes to delete.
+        schema:
+          type: array
+          items:
+            type: string
+        style: form
+        explode: true
+      responses:
+        '204':
+          description: Session registrations removed
+  /organization/{organizationCode}/events/{eventCode}/sessions/formats/:
+    post:
+      summary: Create session format
+      description: Creates a session format label (e.g., Workshop, Panel, Keynote).
+      operationId: createSessionFormat
+      tags:
+      - Session Formats
+      security:
+      - ApiKeyAuth: []
+      parameters:
+      - $ref: '#/components/parameters/organizationCode'
+      - $ref: '#/components/parameters/eventCode'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SessionFormatWrite'
+            examples:
+              sample_session_format:
+                value:
+                  title: Workshop
+                  color: '#007bff'
+      responses:
+        '201':
+          description: Session format created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SessionFormat'
+    get:
+      summary: List session formats
+      description: Returns all session formats for the event.
+      operationId: listSessionFormats
+      tags:
+      - Session Formats
+      security:
+      - ApiKeyAuth: []
+      parameters:
+      - $ref: '#/components/parameters/organizationCode'
+      - $ref: '#/components/parameters/eventCode'
+      responses:
+        '200':
+          description: List of session formats
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/SessionFormat'
+  /organization/{organizationCode}/events/{eventCode}/sessions/formats/{formatCode}/:
+    get:
+      summary: Get single session format
+      operationId: getSessionFormat
+      tags:
+      - Session Formats
+      security:
+      - ApiKeyAuth: []
+      parameters:
+      - $ref: '#/components/parameters/organizationCode'
+      - $ref: '#/components/parameters/eventCode'
+      - $ref: '#/components/parameters/formatCode'
+      responses:
+        '200':
+          description: Session format object
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SessionFormat'
+    patch:
+      summary: Update session format
+      operationId: updateSessionFormat
+      tags:
+      - Session Formats
+      security:
+      - ApiKeyAuth: []
+      parameters:
+      - $ref: '#/components/parameters/organizationCode'
+      - $ref: '#/components/parameters/eventCode'
+      - $ref: '#/components/parameters/formatCode'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SessionFormatWrite'
+      responses:
+        '200':
+          description: Updated session format
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SessionFormat'
+    delete:
+      summary: Delete session format
+      operationId: deleteSessionFormat
+      tags:
+      - Session Formats
+      security:
+      - ApiKeyAuth: []
+      parameters:
+      - $ref: '#/components/parameters/organizationCode'
+      - $ref: '#/components/parameters/eventCode'
+      - $ref: '#/components/parameters/formatCode'
+      responses:
+        '204':
+          description: Session format deleted
+  /organization/{organizationCode}/events/{eventCode}/speakers/:
+    post:
+      summary: Create speaker
+      description: Creates a speaker profile for the event.
+      operationId: createSpeaker
+      tags:
+      - Speakers
+      security:
+      - ApiKeyAuth: []
+      parameters:
+      - $ref: '#/components/parameters/organizationCode'
+      - $ref: '#/components/parameters/eventCode'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SpeakerWrite'
+            examples:
+              sample_speaker:
+                value:
+                  first_name: Tim
+                  last_name: Cook
+                  email: timcook@apple.com
+                  title: CEO
+                  about: CEO of Apple
+                  organization: Apple
+                  location: Cupertino
+                  designations: He/Him
+      responses:
+        '201':
+          description: Speaker created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Speaker'
+    get:
+      summary: List speakers
+      description: Returns all speakers for the event.
+      operationId: listSpeakers
+      tags:
+      - Speakers
+      security:
+      - ApiKeyAuth: []
+      parameters:
+      - $ref: '#/components/parameters/organizationCode'
+      - $ref: '#/components/parameters/eventCode'
+      - $ref: '#/components/parameters/fields'
+      - $ref: '#/components/parameters/pageSize'
+      - $ref: '#/components/parameters/page'
+      responses:
+        '200':
+          description: Paginated list of speakers
+          content:
+            application/json:
+              schema:
+                type: object
+  /organization/{organizationCode}/events/{eventCode}/speakers/{speakerCode}/:
+    get:
+      summary: Get single speaker
+      operationId: getSpeaker
+      tags:
+      - Speakers
+      security:
+      - ApiKeyAuth: []
+      parameters:
+      - $ref: '#/components/parameters/organizationCode'
+      - $ref: '#/components/parameters/eventCode'
+      - $ref: '#/components/parameters/speakerCode'
+      responses:
+        '200':
+          description: Speaker object
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Speaker'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    patch:
+      summary: Update speaker
+      operationId: updateSpeaker
+      tags:
+      - Speakers
+      security:
+      - ApiKeyAuth: []
+      parameters:
+      - $ref: '#/components/parameters/organizationCode'
+      - $ref: '#/components/parameters/eventCode'
+      - $ref: '#/components/parameters/speakerCode'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SpeakerWrite'
+      responses:
+        '200':
+          description: Updated speaker
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Speaker'
+    delete:
+      summary: Delete speaker
+      operationId: deleteSpeaker
+      tags:
+      - Speakers
+      security:
+      - ApiKeyAuth: []
+      parameters:
+      - $ref: '#/components/parameters/organizationCode'
+      - $ref: '#/components/parameters/eventCode'
+      - $ref: '#/components/parameters/speakerCode'
+      responses:
+        '204':
+          description: Speaker deleted
+  /organization/{organizationCode}/events/{eventCode}/speakers/tags/:
+    post:
+      summary: Create speaker tag
+      description: Creates a tag that can be applied to speakers.
+      operationId: createSpeakerTag
+      tags:
+      - Speaker Tags
+      security:
+      - ApiKeyAuth: []
+      parameters:
+      - $ref: '#/components/parameters/organizationCode'
+      - $ref: '#/components/parameters/eventCode'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TagWrite'
+            examples:
+              sample_speaker_tag:
+                value:
+                  title: Keynote Speaker
+                  color: '#00ffff'
+                  description: Reserved for featured keynote presenters.
+                  order_num: 0
+      responses:
+        '201':
+          description: Speaker tag created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Tag'
+    get:
+      summary: List speaker tags
+      operationId: listSpeakerTags
+      tags:
+      - Speaker Tags
+      security:
+      - ApiKeyAuth: []
+      parameters:
+      - $ref: '#/components/parameters/organizationCode'
+      - $ref: '#/components/parameters/eventCode'
+      responses:
+        '200':
+          description: List of speaker tags
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Tag'
+  /organization/{organizationCode}/events/{eventCode}/speakers/tags/{speakerTagCode}/:
+    get:
+      summary: Get single speaker tag
+      operationId: getSpeakerTag
+      tags:
+      - Speaker Tags
+      security:
+      - ApiKeyAuth: []
+      parameters:
+      - $ref: '#/components/parameters/organizationCode'
+      - $ref: '#/components/parameters/eventCode'
+      - $ref: '#/components/parameters/speakerTagCode'
+      responses:
+        '200':
+          description: Speaker tag object
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Tag'
+    patch:
+      summary: Update speaker tag
+      operationId: updateSpeakerTag
+      tags:
+      - Speaker Tags
+      security:
+      - ApiKeyAuth: []
+      parameters:
+      - $ref: '#/components/parameters/organizationCode'
+      - $ref: '#/components/parameters/eventCode'
+      - $ref: '#/components/parameters/speakerTagCode'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TagWrite'
+      responses:
+        '200':
+          description: Updated speaker tag
+    delete:
+      summary: Delete speaker tag
+      operationId: deleteSpeakerTag
+      tags:
+      - Speaker Tags
+      security:
+      - ApiKeyAuth: []
+      parameters:
+      - $ref: '#/components/parameters/organizationCode'
+      - $ref: '#/components/parameters/eventCode'
+      - $ref: '#/components/parameters/speakerTagCode'
+      responses:
+        '204':
+          description: Speaker tag deleted
+  /organization/{organizationCode}/events/{eventCode}/exhibitors/:
+    post:
+      summary: Create exhibitor
+      description: Creates an exhibitor company profile for the event.
+      operationId: createExhibitor
+      tags:
+      - Exhibitors
+      security:
+      - ApiKeyAuth: []
+      parameters:
+      - $ref: '#/components/parameters/organizationCode'
+      - $ref: '#/components/parameters/eventCode'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ExhibitorWrite'
+      responses:
+        '201':
+          description: Exhibitor created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Exhibitor'
+    get:
+      summary: List exhibitors
+      operationId: listExhibitors
+      tags:
+      - Exhibitors
+      security:
+      - ApiKeyAuth: []
+      parameters:
+      - $ref: '#/components/parameters/organizationCode'
+      - $ref: '#/components/parameters/eventCode'
+      - $ref: '#/components/parameters/fields'
+      - $ref: '#/components/parameters/pageSize'
+      - $ref: '#/components/parameters/page'
+      responses:
+        '200':
+          description: Paginated list of exhibitors
+          content:
+            application/json:
+              schema:
+                type: object
+  /organization/{organizationCode}/events/{eventCode}/exhibitors/{exhibitorCode}/:
+    get:
+      summary: Get single exhibitor
+      operationId: getExhibitor
+      tags:
+      - Exhibitors
+      security:
+      - ApiKeyAuth: []
+      parameters:
+      - $ref: '#/components/parameters/organizationCode'
+      - $ref: '#/components/parameters/eventCode'
+      - $ref: '#/components/parameters/exhibitorCode'
+      responses:
+        '200':
+          description: Exhibitor object
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Exhibitor'
+    patch:
+      summary: Update exhibitor
+      operationId: updateExhibitor
+      tags:
+      - Exhibitors
+      security:
+      - ApiKeyAuth: []
+      parameters:
+      - $ref: '#/components/parameters/organizationCode'
+      - $ref: '#/components/parameters/eventCode'
+      - $ref: '#/components/parameters/exhibitorCode'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ExhibitorWrite'
+      responses:
+        '200':
+          description: Updated exhibitor
+    delete:
+      summary: Delete exhibitor
+      operationId: deleteExhibitor
+      tags:
+      - Exhibitors
+      security:
+      - ApiKeyAuth: []
+      parameters:
+      - $ref: '#/components/parameters/organizationCode'
+      - $ref: '#/components/parameters/eventCode'
+      - $ref: '#/components/parameters/exhibitorCode'
+      responses:
+        '204':
+          description: Exhibitor deleted
+  /organization/{organizationCode}/events/{eventCode}/exhibitors/{exhibitorCode}/order/summary/:
+    get:
+      summary: Get exhibitor order summary
+      description: Returns a summary of purchases and financial totals for an exhibitor.
+      operationId: getExhibitorOrderSummary
+      tags:
+      - Exhibitors
+      security:
+      - ApiKeyAuth: []
+      parameters:
+      - $ref: '#/components/parameters/organizationCode'
+      - $ref: '#/components/parameters/eventCode'
+      - $ref: '#/components/parameters/exhibitorCode'
+      responses:
+        '200':
+          description: Exhibitor order summary
+          content:
+            application/json:
+              schema:
+                type: object
+  /organization/{organizationCode}/events/{eventCode}/exhibitors/booths/:
+    post:
+      summary: Create exhibitor booth
+      description: Creates a booth assignment for an exhibitor.
+      operationId: createExhibitorBooth
+      tags:
+      - Exhibitor Booths
+      security:
+      - ApiKeyAuth: []
+      parameters:
+      - $ref: '#/components/parameters/organizationCode'
+      - $ref: '#/components/parameters/eventCode'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ExhibitorBoothWrite'
+            examples:
+              sample_exhibitor_booth:
+                value:
+                  booth_code: '101'
+                  area: 200.0
+      responses:
+        '201':
+          description: Booth created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExhibitorBooth'
+    get:
+      summary: List exhibitor booths
+      operationId: listExhibitorBooths
+      tags:
+      - Exhibitor Booths
+      security:
+      - ApiKeyAuth: []
+      parameters:
+      - $ref: '#/components/parameters/organizationCode'
+      - $ref: '#/components/parameters/eventCode'
+      responses:
+        '200':
+          description: List of exhibitor booths
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ExhibitorBooth'
+  /organization/{organizationCode}/events/{eventCode}/exhibitors/booths/{boothCode}/:
+    get:
+      summary: Get single exhibitor booth
+      operationId: getExhibitorBooth
+      tags:
+      - Exhibitor Booths
+      security:
+      - ApiKeyAuth: []
+      parameters:
+      - $ref: '#/components/parameters/organizationCode'
+      - $ref: '#/components/parameters/eventCode'
+      - $ref: '#/components/parameters/boothCode'
+      responses:
+        '200':
+          description: Exhibitor booth object
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExhibitorBooth'
+    patch:
+      summary: Update exhibitor booth
+      operationId: updateExhibitorBooth
+      tags:
+      - Exhibitor Booths
+      security:
+      - ApiKeyAuth: []
+      parameters:
+      - $ref: '#/components/parameters/organizationCode'
+      - $ref: '#/components/parameters/eventCode'
+      - $ref: '#/components/parameters/boothCode'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ExhibitorBoothWrite'
+      responses:
+        '200':
+          description: Updated booth
+    delete:
+      summary: Delete exhibitor booth
+      operationId: deleteExhibitorBooth
+      tags:
+      - Exhibitor Booths
+      security:
+      - ApiKeyAuth: []
+      parameters:
+      - $ref: '#/components/parameters/organizationCode'
+      - $ref: '#/components/parameters/eventCode'
+      - $ref: '#/components/parameters/boothCode'
+      responses:
+        '204':
+          description: Booth deleted
+  /organization/{organizationCode}/events/{eventCode}/sponsors/:
+    post:
+      summary: Create sponsor
+      operationId: createSponsor
+      tags:
+      - Sponsors
+      security:
+      - ApiKeyAuth: []
+      parameters:
+      - $ref: '#/components/parameters/organizationCode'
+      - $ref: '#/components/parameters/eventCode'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SponsorWrite'
+      responses:
+        '201':
+          description: Sponsor created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Sponsor'
+    get:
+      summary: List sponsors
+      operationId: listSponsors
+      tags:
+      - Sponsors
+      security:
+      - ApiKeyAuth: []
+      parameters:
+      - $ref: '#/components/parameters/organizationCode'
+      - $ref: '#/components/parameters/eventCode'
+      - $ref: '#/components/parameters/fields'
+      - $ref: '#/components/parameters/pageSize'
+      - $ref: '#/components/parameters/page'
+      responses:
+        '200':
+          description: Paginated list of sponsors
+          content:
+            application/json:
+              schema:
+                type: object
+  /organization/{organizationCode}/events/{eventCode}/sponsors/{sponsorCode}/:
+    get:
+      summary: Get single sponsor
+      operationId: getSponsor
+      tags:
+      - Sponsors
+      security:
+      - ApiKeyAuth: []
+      parameters:
+      - $ref: '#/components/parameters/organizationCode'
+      - $ref: '#/components/parameters/eventCode'
+      - $ref: '#/components/parameters/sponsorCode'
+      responses:
+        '200':
+          description: Sponsor object
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Sponsor'
+    patch:
+      summary: Update sponsor
+      operationId: updateSponsor
+      tags:
+      - Sponsors
+      security:
+      - ApiKeyAuth: []
+      parameters:
+      - $ref: '#/components/parameters/organizationCode'
+      - $ref: '#/components/parameters/eventCode'
+      - $ref: '#/components/parameters/sponsorCode'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SponsorWrite'
+      responses:
+        '200':
+          description: Updated sponsor
+    delete:
+      summary: Delete sponsor
+      operationId: deleteSponsor
+      tags:
+      - Sponsors
+      security:
+      - ApiKeyAuth: []
+      parameters:
+      - $ref: '#/components/parameters/organizationCode'
+      - $ref: '#/components/parameters/eventCode'
+      - $ref: '#/components/parameters/sponsorCode'
+      responses:
+        '204':
+          description: Sponsor deleted
+  /organization/{organizationCode}/events/{eventCode}/sponsors/{sponsorCode}/order/summary/:
+    get:
+      summary: Get sponsor order summary
+      description: Returns a financial summary of the sponsor's purchases.
+      operationId: getSponsorOrderSummary
+      tags:
+      - Sponsors
+      security:
+      - ApiKeyAuth: []
+      parameters:
+      - $ref: '#/components/parameters/organizationCode'
+      - $ref: '#/components/parameters/eventCode'
+      - $ref: '#/components/parameters/sponsorCode'
+      responses:
+        '200':
+          description: Sponsor order summary
+          content:
+            application/json:
+              schema:
+                type: object
+  /organization/{organizationCode}/events/{eventCode}/sponsors/tiers/:
+    post:
+      summary: Create sponsor tier
+      description: Creates a sponsorship tier (e.g., Gold, Silver, Bronze).
+      operationId: createSponsorTier
+      tags:
+      - Sponsor Tiers
+      security:
+      - ApiKeyAuth: []
+      parameters:
+      - $ref: '#/components/parameters/organizationCode'
+      - $ref: '#/components/parameters/eventCode'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SponsorTierWrite'
+            examples:
+              sample_sponsor_tier:
+                value:
+                  name: Gold Tier
+                  color: '#FFD700'
+                  description: Premium sponsor tier with full branding rights.
+                  order_num: 1
+      responses:
+        '201':
+          description: Sponsor tier created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SponsorTier'
+    get:
+      summary: List sponsor tiers
+      operationId: listSponsorTiers
+      tags:
+      - Sponsor Tiers
+      security:
+      - ApiKeyAuth: []
+      parameters:
+      - $ref: '#/components/parameters/organizationCode'
+      - $ref: '#/components/parameters/eventCode'
+      responses:
+        '200':
+          description: List of sponsor tiers
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/SponsorTier'
+  /organization/{organizationCode}/events/{eventCode}/sponsors/tiers/{sponsorTierCode}/:
+    get:
+      summary: Get single sponsor tier
+      operationId: getSponsorTier
+      tags:
+      - Sponsor Tiers
+      security:
+      - ApiKeyAuth: []
+      parameters:
+      - $ref: '#/components/parameters/organizationCode'
+      - $ref: '#/components/parameters/eventCode'
+      - $ref: '#/components/parameters/sponsorTierCode'
+      responses:
+        '200':
+          description: Sponsor tier object
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SponsorTier'
+    patch:
+      summary: Update sponsor tier
+      operationId: updateSponsorTier
+      tags:
+      - Sponsor Tiers
+      security:
+      - ApiKeyAuth: []
+      parameters:
+      - $ref: '#/components/parameters/organizationCode'
+      - $ref: '#/components/parameters/eventCode'
+      - $ref: '#/components/parameters/sponsorTierCode'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SponsorTierWrite'
+      responses:
+        '200':
+          description: Updated sponsor tier
+    delete:
+      summary: Delete sponsor tier
+      operationId: deleteSponsorTier
+      tags:
+      - Sponsor Tiers
+      security:
+      - ApiKeyAuth: []
+      parameters:
+      - $ref: '#/components/parameters/organizationCode'
+      - $ref: '#/components/parameters/eventCode'
+      - $ref: '#/components/parameters/sponsorTierCode'
+      responses:
+        '204':
+          description: Sponsor tier deleted
+  /organization/{organizationCode}/events/{eventCode}/announcements/:
+    post:
+      summary: Create event announcement
+      description: 'Creates an announcement scoped to a specific event.
+
+        Announcements can be targeted to attendees, speakers,
+
+        exhibitors, or sponsors, and distributed via email or
+
+        push notification.
+
+        '
+      operationId: createEventAnnouncement
+      tags:
+      - Announcements
+      security:
+      - ApiKeyAuth: []
+      parameters:
+      - $ref: '#/components/parameters/organizationCode'
+      - $ref: '#/components/parameters/eventCode'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EventAnnouncementWrite'
+      responses:
+        '201':
+          description: Announcement created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EventAnnouncement'
+    get:
+      summary: List event announcements
+      operationId: listEventAnnouncements
+      tags:
+      - Announcements
+      security:
+      - ApiKeyAuth: []
+      parameters:
+      - $ref: '#/components/parameters/organizationCode'
+      - $ref: '#/components/parameters/eventCode'
+      responses:
+        '200':
+          description: List of event announcements
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/EventAnnouncement'
+  /organization/{organizationCode}/events/{eventCode}/announcements/{announcementCode}/:
+    get:
+      summary: Get announcement details
+      operationId: getEventAnnouncement
+      tags:
+      - Announcements
+      security:
+      - ApiKeyAuth: []
+      parameters:
+      - $ref: '#/components/parameters/organizationCode'
+      - $ref: '#/components/parameters/eventCode'
+      - $ref: '#/components/parameters/announcementCode'
+      responses:
+        '200':
+          description: Announcement object
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EventAnnouncement'
+    patch:
+      summary: Update event announcement
+      operationId: updateEventAnnouncement
+      tags:
+      - Announcements
+      security:
+      - ApiKeyAuth: []
+      parameters:
+      - $ref: '#/components/parameters/organizationCode'
+      - $ref: '#/components/parameters/eventCode'
+      - $ref: '#/components/parameters/announcementCode'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EventAnnouncementWrite'
+      responses:
+        '200':
+          description: Updated announcement
+    delete:
+      summary: Delete event announcement
+      operationId: deleteEventAnnouncement
+      tags:
+      - Announcements
+      security:
+      - ApiKeyAuth: []
+      parameters:
+      - $ref: '#/components/parameters/organizationCode'
+      - $ref: '#/components/parameters/eventCode'
+      - $ref: '#/components/parameters/announcementCode'
+      responses:
+        '204':
+          description: Announcement deleted
+  /organization/{organizationCode}/events/{eventCode}/announcements/{announcementCode}/send/:
+    get:
+      summary: Get announcement recipient subscription info
+      description: Returns subscription status for targeted attendees.
+      operationId: getAnnouncementRecipients
+      tags:
+      - Announcements
+      security:
+      - ApiKeyAuth: []
+      parameters:
+      - $ref: '#/components/parameters/organizationCode'
+      - $ref: '#/components/parameters/eventCode'
+      - $ref: '#/components/parameters/announcementCode'
+      responses:
+        '200':
+          description: Recipient subscription data
+          content:
+            application/json:
+              schema:
+                type: object
+    post:
+      summary: Send event announcement
+      description: 'Sends the announcement to one or more attendees by code.
+
+        Set `should_release` to `true` to also mark the announcement
+
+        as released. Use `force_send` to bypass opt-out restrictions.
+
+        '
+      operationId: sendEventAnnouncement
+      tags:
+      - Announcements
+      security:
+      - ApiKeyAuth: []
+      parameters:
+      - $ref: '#/components/parameters/organizationCode'
+      - $ref: '#/components/parameters/eventCode'
+      - $ref: '#/components/parameters/announcementCode'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                event:
+                  type: string
+                  description: Event code.
+                attendee_codes:
+                  type: array
+                  items:
+                    type: string
+                  description: Codes of attendees to send the announcement to.
+                should_release:
+                  type: boolean
+                  description: If true, marks the announcement as released after sending.
+                  default: false
+                force_send:
+                  type: boolean
+                  description: If true, sends regardless of attendee opt-out status.
+                  default: false
+      responses:
+        '200':
+          description: Announcement sent successfully
+  /organization/{organizationCode}/events/{eventCode}/tags/:
+    get:
+      summary: List event tags
+      description: Returns all tags defined for the event.
+      operationId: listEventTags
+      tags:
+      - Tags
+      security:
+      - ApiKeyAuth: []
+      parameters:
+      - $ref: '#/components/parameters/organizationCode'
+      - $ref: '#/components/parameters/eventCode'
+      - $ref: '#/components/parameters/fields'
+      responses:
+        '200':
+          description: List of event tags
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/EventTag'
+  /organization/{organizationCode}/events/{eventCode}/registrations/:
+    get:
+      summary: List registrations
+      description: Returns registration records for the event.
+      operationId: listRegistrations
+      tags:
+      - Registrations
+      security:
+      - ApiKeyAuth: []
+      parameters:
+      - $ref: '#/components/parameters/organizationCode'
+      - $ref: '#/components/parameters/eventCode'
+      - $ref: '#/components/parameters/fields'
+      - $ref: '#/components/parameters/pageSize'
+      - $ref: '#/components/parameters/page'
+      responses:
+        '200':
+          description: Paginated list of registration records
+          content:
+            application/json:
+              schema:
+                type: object
+  /organization/{organizationCode}/events/{eventCode}/ticketpurchases/:
+    get:
+      summary: List ticket purchases
+      description: Returns all ticket purchase records for the event.
+      operationId: listTicketPurchases
+      tags:
+      - Registrations
+      security:
+      - ApiKeyAuth: []
+      parameters:
+      - $ref: '#/components/parameters/organizationCode'
+      - $ref: '#/components/parameters/eventCode'
+      - $ref: '#/components/parameters/fields'
+      - $ref: '#/components/parameters/pageSize'
+      - $ref: '#/components/parameters/page'
+      responses:
+        '200':
+          description: Paginated list of ticket purchase records
+          content:
+            application/json:
+              schema:
+                type: object
+  /organization/{organizationCode}/tickets/:
+    get:
+      summary: List tickets
+      description: Returns all ticket types defined for the organization.
+      operationId: listTickets
+      tags:
+      - Tickets
+      security:
+      - ApiKeyAuth: []
+      parameters:
+      - $ref: '#/components/parameters/organizationCode'
+      - $ref: '#/components/parameters/fields'
+      responses:
+        '200':
+          description: List of ticket types
+          content:
+            application/json:
+              schema:
+                type: object
+  /organization/{organizationCode}/tickets/{ticketCode}/:
+    get:
+      summary: Get single ticket
+      description: Returns a single ticket type record.
+      operationId: getTicket
+      tags:
+      - Tickets
+      security:
+      - ApiKeyAuth: []
+      parameters:
+      - $ref: '#/components/parameters/organizationCode'
+      - name: ticketCode
+        in: path
+        required: true
+        schema:
+          type: string
+        description: Unique ticket code.
+      responses:
+        '200':
+          description: Ticket object
+          content:
+            application/json:
+              schema:
+                type: object
+  /organization/{organizationCode}/events/{eventCode}/tickettransferlogs/:
+    get:
+      summary: List ticket transfer logs
+      description: Returns all ticket transfer records for the event.
+      operationId: listTicketTransferLogs
+      tags:
+      - Ticket Transfer Logs
+      security:
+      - ApiKeyAuth: []
+      parameters:
+      - $ref: '#/components/parameters/organizationCode'
+      - $ref: '#/components/parameters/eventCode'
+      responses:
+        '200':
+          description: List of ticket transfer logs
+          content:
+            application/json:
+              schema:
+                type: object
+  /organization/{organizationCode}/events/{eventCode}/tickettransferlogs/{ticketTransferCode}/:
+    get:
+      summary: Get single ticket transfer log
+      operationId: getTicketTransferLog
+      tags:
+      - Ticket Transfer Logs
+      security:
+      - ApiKeyAuth: []
+      parameters:
+      - $ref: '#/components/parameters/organizationCode'
+      - $ref: '#/components/parameters/eventCode'
+      - name: ticketTransferCode
+        in: path
+        required: true
+        schema:
+          type: string
+        description: Unique ticket transfer log code.
+      responses:
+        '200':
+          description: Ticket transfer log object
+          content:
+            application/json:
+              schema:
+                type: object
+  /organization/{organizationCode}/events/{eventCode}/surcharges/:
+    get:
+      summary: List surcharges
+      description: Returns all surcharges configured for the event.
+      operationId: listSurcharges
+      tags:
+      - Surcharges
+      security:
+      - ApiKeyAuth: []
+      parameters:
+      - $ref: '#/components/parameters/organizationCode'
+      - $ref: '#/components/parameters/eventCode'
+      responses:
+        '200':
+          description: List of surcharges
+          content:
+            application/json:
+              schema:
+                type: object
+  /organization/{organizationCode}/events/{eventCode}/surcharges/{surchargeCode}/:
+    get:
+      summary: Get single surcharge
+      operationId: getSurcharge
+      tags:
+      - Surcharges
+      security:
+      - ApiKeyAuth: []
+      parameters:
+      - $ref: '#/components/parameters/organizationCode'
+      - $ref: '#/components/parameters/eventCode'
+      - name: surchargeCode
+        in: path
+        required: true
+        schema:
+          type: string
+        description: Unique surcharge code.
+      responses:
+        '200':
+          description: Surcharge object
+          content:
+            application/json:
+              schema:
+                type: object
+  /organization/{organizationCode}/events/{eventCode}/registrations/promotions/:
+    get:
+      summary: List registration promotions
+      description: Returns all promotional codes for event registrations.
+      operationId: listRegistrationPromotions
+      tags:
+      - Promotions
+      security:
+      - ApiKeyAuth: []
+      parameters:
+      - $ref: '#/components/parameters/organizationCode'
+      - $ref: '#/components/parameters/eventCode'
+      responses:
+        '200':
+          description: List of registration promotions
+          content:
+            application/json:
+              schema:
+                type: object
+  /organization/{organizationCode}/events/{eventCode}/registrations/promotions/{registrationPromotionCode}/:
+    get:
+      summary: Get single registration promotion
+      operationId: getRegistrationPromotion
+      tags:
+      - Promotions
+      security:
+      - ApiKeyAuth: []
+      parameters:
+      - $ref: '#/components/parameters/organizationCode'
+      - $ref: '#/components/parameters/eventCode'
+      - name: registrationPromotionCode
+        in: path
+        required: true
+        schema:
+          type: string
+        description: Unique registration promotion code.
+      responses:
+        '200':
+          description: Registration promotion object
+          content:
+            application/json:
+              schema:
+                type: object
+  /organization/{organizationCode}/events/{eventCode}/exhibitors/promotions/:
+    get:
+      summary: List exhibitor promotions
+      operationId: listExhibitorPromotions
+      tags:
+      - Promotions
+      security:
+      - ApiKeyAuth: []
+      parameters:
+      - $ref: '#/components/parameters/organizationCode'
+      - $ref: '#/components/parameters/eventCode'
+      responses:
+        '200':
+          description: List of exhibitor promotions
+          content:
+            application/json:
+              schema:
+                type: object
+  /organization/{organizationCode}/events/{eventCode}/exhibitors/promotions/{exhibitorPromotionCode}:
+    get:
+      summary: Get single exhibitor promotion
+      operationId: getExhibitorPromotion
+      tags:
+      - Promotions
+      security:
+      - ApiKeyAuth: []
+      parameters:
+      - $ref: '#/components/parameters/organizationCode'
+      - $ref: '#/components/parameters/eventCode'
+      - name: exhibitorPromotionCode
+        in: path
+        required: true
+        schema:
+          type: string
+        description: Unique exhibitor promotion code.
+      responses:
+        '200':
+          description: Exhibitor promotion object
+          content:
+            application/json:
+              schema:
+                type: object
+  /organization/{organizationCode}/events/{eventCode}/sponsors/promotions/:
+    get:
+      summary: List sponsor promotions
+      operationId: listSponsorPromotions
+      tags:
+      - Promotions
+      security:
+      - ApiKeyAuth: []
+      parameters:
+      - $ref: '#/components/parameters/organizationCode'
+      - $ref: '#/components/parameters/eventCode'
+      responses:
+        '200':
+          description: List of sponsor promotions
+          content:
+            application/json:
+              schema:
+                type: object
+  /organization/{organizationCode}/events/{eventCode}/sponsors/promotions/{sponsorPromotionCode}/:
+    get:
+      summary: Get single sponsor promotion
+      operationId: getSponsorPromotion
+      tags:
+      - Promotions
+      security:
+      - ApiKeyAuth: []
+      parameters:
+      - $ref: '#/components/parameters/organizationCode'
+      - $ref: '#/components/parameters/eventCode'
+      - name: sponsorPromotionCode
+        in: path
+        required: true
+        schema:
+          type: string
+        description: Unique sponsor promotion code.
+      responses:
+        '200':
+          description: Sponsor promotion object
+          content:
+            application/json:
+              schema:
+                type: object
+  /organization/{organizationCode}/members/:
+    post:
+      summary: Create member
+      description: Creates a single organization member (contact).
+      operationId: createMember
+      tags:
+      - Members
+      security:
+      - ApiKeyAuth: []
+      parameters:
+      - $ref: '#/components/parameters/organizationCode'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MemberWrite'
+            examples:
+              sample_member:
+                value:
+                  email: timcook@apple.com
+                  first_name: Tim
+                  last_name: Cook
+                  title: CEO
+                  organization: Apple
+                  address_city: Cupertino
+                  address_state: CA
+                  address_country: United States
+                  designations: He/Him
+      responses:
+        '201':
+          description: Member created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Member'
+    get:
+      summary: List members
+      description: Returns all members of the organization.
+      operationId: listMembers
+      tags:
+      - Members
+      security:
+      - ApiKeyAuth: []
+      parameters:
+      - $ref: '#/components/parameters/organizationCode'
+      - $ref: '#/components/parameters/fields'
+      - $ref: '#/components/parameters/pageSize'
+      - $ref: '#/components/parameters/page'
+      responses:
+        '200':
+          description: Paginated list of members
+          content:
+            application/json:
+              schema:
+                type: object
+  /organization/{organizationCode}/membersbulk/:
+    post:
+      summary: Bulk create members
+      operationId: bulkCreateMembers
+      tags:
+      - Members
+      security:
+      - ApiKeyAuth: []
+      parameters:
+      - $ref: '#/components/parameters/organizationCode'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: '#/components/schemas/MemberWrite'
+      responses:
+        '201':
+          description: Members created
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Member'
+    patch:
+      summary: Bulk update members
+      operationId: bulkUpdateMembers
+      tags:
+      - Members
+      security:
+      - ApiKeyAuth: []
+      parameters:
+      - $ref: '#/components/parameters/organizationCode'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                allOf:
+                - $ref: '#/components/schemas/MemberWrite'
+                - type: object
+                  required:
+                  - code
+                  properties:
+                    code:
+                      type: string
+      responses:
+        '200':
+          description: Members updated
+  /organization/{organizationCode}/members/{memberCode}/:
+    get:
+      summary: Get single member
+      operationId: getMember
+      tags:
+      - Members
+      security:
+      - ApiKeyAuth: []
+      parameters:
+      - $ref: '#/components/parameters/organizationCode'
+      - $ref: '#/components/parameters/memberCode'
+      - $ref: '#/components/parameters/fields'
+      responses:
+        '200':
+          description: Member object
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Member'
+    patch:
+      summary: Update member
+      operationId: updateMember
+      tags:
+      - Members
+      security:
+      - ApiKeyAuth: []
+      parameters:
+      - $ref: '#/components/parameters/organizationCode'
+      - $ref: '#/components/parameters/memberCode'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MemberWrite'
+      responses:
+        '200':
+          description: Updated member
+  /organization/{organizationCode}/members/convertcodes/:
+    post:
+      summary: Convert member/attendee emails to codes
+      description: 'Accepts an array of email addresses and returns the corresponding
+
+        PheedLoop member or attendee codes. Useful for cross-referencing
+
+        external systems.
+
+        '
+      operationId: convertEmailsToCodes
+      tags:
+      - Members
+      security:
+      - ApiKeyAuth: []
+      parameters:
+      - $ref: '#/components/parameters/organizationCode'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - emails
+              properties:
+                emails:
+                  type: array
+                  items:
+                    type: string
+                    format: email
+                  description: Email addresses to convert.
+                  examples:
+                  - - timcook@apple.com
+                    - john@niantic.com
+      responses:
+        '200':
+          description: Mapping of email addresses to PheedLoop codes
+          content:
+            application/json:
+              schema:
+                type: object
+  /organization/{organizationCode}/announcements/:
+    post:
+      summary: Create organization announcement
+      description: 'Creates an announcement scoped to the organization (not a
+
+        specific event). Supports targeting by membership tier,
+
+        event group, or contact group.
+
+        '
+      operationId: createOrgAnnouncement
+      tags:
+      - Announcements
+      security:
+      - ApiKeyAuth: []
+      parameters:
+      - $ref: '#/components/parameters/organizationCode'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OrgAnnouncementWrite'
+      responses:
+        '201':
+          description: Organization announcement created
+    get:
+      summary: List organization announcements
+      operationId: listOrgAnnouncements
+      tags:
+      - Announcements
+      security:
+      - ApiKeyAuth: []
+      parameters:
+      - $ref: '#/components/parameters/organizationCode'
+      responses:
+        '200':
+          description: List of organization announcements
+          content:
+            application/json:
+              schema:
+                type: object
+  /organization/{organizationCode}/announcements/{organizationAnnouncementCode}/:
+    get:
+      summary: Get single organization announcement
+      operationId: getOrgAnnouncement
+      tags:
+      - Announcements
+      security:
+      - ApiKeyAuth: []
+      parameters:
+      - $ref: '#/components/parameters/organizationCode'
+      - $ref: '#/components/parameters/organizationAnnouncementCode'
+      responses:
+        '200':
+          description: Organization announcement object
+    patch:
+      summary: Update organization announcement
+      operationId: updateOrgAnnouncement
+      tags:
+      - Announcements
+      security:
+      - ApiKeyAuth: []
+      parameters:
+      - $ref: '#/components/parameters/organizationCode'
+      - $ref: '#/components/parameters/organizationAnnouncementCode'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OrgAnnouncementWrite'
+      responses:
+        '200':
+          description: Updated organization announcement
+    delete:
+      summary: Delete organization announcement
+      operationId: deleteOrgAnnouncement
+      tags:
+      - Announcements
+      security:
+      - ApiKeyAuth: []
+      parameters:
+      - $ref: '#/components/parameters/organizationCode'
+      - $ref: '#/components/parameters/organizationAnnouncementCode'
+      responses:
+        '204':
+          description: Announcement deleted
+  /organization/{organizationCode}/announcements/{organizationAnnouncementCode}/send/:
+    get:
+      summary: Get organization announcement recipient info
+      operationId: getOrgAnnouncementRecipients
+      tags:
+      - Announcements
+      security:
+      - ApiKeyAuth: []
+      parameters:
+      - $ref: '#/components/parameters/organizationCode'
+      - $ref: '#/components/parameters/organizationAnnouncementCode'
+      responses:
+        '200':
+          description: Recipient subscription information
+    post:
+      summary: Send organization announcement
+      operationId: sendOrgAnnouncement
+      tags:
+      - Announcements
+      security:
+      - ApiKeyAuth: []
+      parameters:
+      - $ref: '#/components/parameters/organizationCode'
+      - $ref: '#/components/parameters/organizationAnnouncementCode'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                attendee_codes:
+                  type: array
+                  items:
+                    type: string
+                should_release:
+                  type: boolean
+                  default: false
+                force_send:
+                  type: boolean
+                  default: false
+      responses:
+        '200':
+          description: Announcement sent
+  /organization/{organizationCode}/memberships/:
+    post:
+      summary: Create membership
+      description: Creates a new membership record and optionally sends a confirmation
+        email.
+      operationId: createMembership
+      tags:
+      - Memberships
+      security:
+      - ApiKeyAuth: []
+      parameters:
+      - $ref: '#/components/parameters/organizationCode'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MembershipWrite'
+            examples:
+              sample_membership:
+                value:
+                  first_name: John
+                  last_name: Doe
+                  email: johndoe@example.com
+                  membership_tier: TIERGOLD123
+                  date_start: '2025-01-01'
+                  date_expiry: '2025-12-31'
+                  is_active: true
+                  send_confirmation: true
+      responses:
+        '201':
+          description: Membership created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Membership'
+    get:
+      summary: List memberships
+      operationId: listMemberships
+      tags:
+      - Memberships
+      security:
+      - ApiKeyAuth: []
+      parameters:
+      - $ref: '#/components/parameters/organizationCode'
+      - $ref: '#/components/parameters/pageSize'
+      - $ref: '#/components/parameters/page'
+      responses:
+        '200':
+          description: Paginated list of memberships
+          content:
+            application/json:
+              schema:
+                type: object
+  /organization/{organizationCode}/memberships/{membershipCode}/:
+    get:
+      summary: Get single membership
+      operationId: getMembership
+      tags:
+      - Memberships
+      security:
+      - ApiKeyAuth: []
+      parameters:
+      - $ref: '#/components/parameters/organizationCode'
+      - $ref: '#/components/parameters/membershipCode'
+      responses:
+        '200':
+          description: Membership object
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Membership'
+    patch:
+      summary: Update membership
+      operationId: updateMembership
+      tags:
+      - Memberships
+      security:
+      - ApiKeyAuth: []
+      parameters:
+      - $ref: '#/components/parameters/organizationCode'
+      - $ref: '#/components/parameters/membershipCode'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MembershipWrite'
+      responses:
+        '200':
+          description: Updated membership
+    delete:
+      summary: Delete membership
+      operationId: deleteMembership
+      tags:
+      - Memberships
+      security:
+      - ApiKeyAuth: []
+      parameters:
+      - $ref: '#/components/parameters/organizationCode'
+      - $ref: '#/components/parameters/membershipCode'
+      responses:
+        '204':
+          description: Membership deleted
+  /organization/{organizationCode}/memberships/{membershipCode}/assign/:
+    patch:
+      summary: Assign membership to attendee
+      description: Links an existing unassigned membership to a specific attendee.
+      operationId: assignMembership
+      tags:
+      - Memberships
+      security:
+      - ApiKeyAuth: []
+      parameters:
+      - $ref: '#/components/parameters/organizationCode'
+      - $ref: '#/components/parameters/membershipCode'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - attendee
+              properties:
+                attendee:
+                  type: string
+                  description: Attendee code to assign this membership to.
+      responses:
+        '200':
+          description: Membership assigned
+  /organization/{organizationCode}/members/organization/:
+    post:
+      summary: Create member organization
+      description: Creates a company/organization record within the membership system.
+      operationId: createMemberOrganization
+      tags:
+      - Member Organizations
+      security:
+      - ApiKeyAuth: []
+      parameters:
+      - $ref: '#/components/parameters/organizationCode'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MemberOrganizationWrite'
+            examples:
+              sample_member_organization:
+                value:
+                  name: PheedLoop Inc
+                  internal_code: ORG101
+                  payment_code_prefix: UTP
+                  address_city: Toronto
+                  address_country: Canada
+                  website: https://www.pheedloop.com
+      responses:
+        '201':
+          description: Member organization created
+    get:
+      summary: List member organizations
+      operationId: listMemberOrganizations
+      tags:
+      - Member Organizations
+      security:
+      - ApiKeyAuth: []
+      parameters:
+      - $ref: '#/components/parameters/organizationCode'
+      responses:
+        '200':
+          description: List of member organizations
+          content:
+            application/json:
+              schema:
+                type: object
+  /organization/{organizationCode}/members/organization/{memberOrganizationCode}/:
+    get:
+      summary: Get single member organization
+      operationId: getMemberOrganization
+      tags:
+      - Member Organizations
+      security:
+      - ApiKeyAuth: []
+      parameters:
+      - $ref: '#/components/parameters/organizationCode'
+      - $ref: '#/components/parameters/memberOrganizationCode'
+      responses:
+        '200':
+          description: Member organization object
+    patch:
+      summary: Update member organization
+      operationId: updateMemberOrganization
+      tags:
+      - Member Organizations
+      security:
+      - ApiKeyAuth: []
+      parameters:
+      - $ref: '#/components/parameters/organizationCode'
+      - $ref: '#/components/parameters/memberOrganizationCode'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MemberOrganizationWrite'
+      responses:
+        '200':
+          description: Updated member organization
+    delete:
+      summary: Delete member organization
+      operationId: deleteMemberOrganization
+      tags:
+      - Member Organizations
+      security:
+      - ApiKeyAuth: []
+      parameters:
+      - $ref: '#/components/parameters/organizationCode'
+      - $ref: '#/components/parameters/memberOrganizationCode'
+      responses:
+        '204':
+          description: Member organization deleted
+  /organization/{organizationCode}/reports/{reportCode}/:
+    get:
+      summary: Get report data
+      description: 'Returns paginated data for a specific report. Reports are
+
+        pre-configured in the PheedLoop dashboard. Use `page_size`
+
+        and `page` to paginate through large result sets.
+
+        '
+      operationId: getReportData
+      tags:
+      - Reports
+      security:
+      - ApiKeyAuth: []
+      parameters:
+      - $ref: '#/components/parameters/organizationCode'
+      - name: reportCode
+        in: path
+        required: true
+        schema:
+          type: string
+        description: Unique report code (e.g., `REP66RIOLKP0ZRV`).
+      - $ref: '#/components/parameters/pageSize'
+      - $ref: '#/components/parameters/page'
+      responses:
+        '200':
+          description: Paginated report data
+          content:
+            application/json:
+              schema:
+                type: object
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /organization/{organizationCode}/events/{eventCode}/resthooks/:
+    post:
+      summary: Create REST hook
+      description: 'Subscribes an endpoint to a PheedLoop platform event.
+
+        When the specified action occurs, PheedLoop will send an
+
+        HTTP POST request to the provided endpoint URL.
+
+
+        ### Supported actions
+
+        | Action | Description |
+
+        |---|---|
+
+        | `registration.created` | A new registration is completed |
+
+        | `attendee.updated` | An attendee record is modified |
+
+        | `session.created` | A session is added to the event |
+
+        | `checkin.created` | An attendee checks in |
+
+        '
+      operationId: createRestHook
+      tags:
+      - REST Hooks
+      security:
+      - ApiKeyAuth: []
+      parameters:
+      - $ref: '#/components/parameters/organizationCode'
+      - $ref: '#/components/parameters/eventCode'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RestHookWrite'
+            examples:
+              sample_rest_hook:
+                value:
+                  action: registration.created
+                  endpoint: https://hooks.zapier.com/hooks/catch/example/
+      responses:
+        '201':
+          description: REST hook created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RestHook'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+    get:
+      summary: List REST hooks
+      description: Returns all webhook subscriptions for the event.
+      operationId: listRestHooks
+      tags:
+      - REST Hooks
+      security:
+      - ApiKeyAuth: []
+      parameters:
+      - $ref: '#/components/parameters/organizationCode'
+      - $ref: '#/components/parameters/eventCode'
+      responses:
+        '200':
+          description: List of REST hooks
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/RestHook'
+  /organization/{organizationCode}/events/{eventCode}/resthooks/{restHookCode}/:
+    get:
+      summary: Get single REST hook
+      operationId: getRestHook
+      tags:
+      - REST Hooks
+      security:
+      - ApiKeyAuth: []
+      parameters:
+      - $ref: '#/components/parameters/organizationCode'
+      - $ref: '#/components/parameters/eventCode'
+      - $ref: '#/components/parameters/restHookCode'
+      responses:
+        '200':
+          description: REST hook object
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RestHook'
+    put:
+      summary: Update REST hook
+      description: Replaces an existing REST hook's action and/or endpoint.
+      operationId: updateRestHook
+      tags:
+      - REST Hooks
+      security:
+      - ApiKeyAuth: []
+      parameters:
+      - $ref: '#/components/parameters/organizationCode'
+      - $ref: '#/components/parameters/eventCode'
+      - $ref: '#/components/parameters/restHookCode'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RestHookWrite'
+            examples:
+              sample_updated_rest_hook:
+                value:
+                  action: attendee.updated
+                  endpoint: https://hooks.zapier.com/hooks/catch/example2/
+      responses:
+        '200':
+          description: Updated REST hook
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RestHook'
+    delete:
+      summary: Delete REST hook
+      description: Removes a webhook subscription.
+      operationId: deleteRestHook
+      tags:
+      - REST Hooks
+      security:
+      - ApiKeyAuth: []
+      parameters:
+      - $ref: '#/components/parameters/organizationCode'
+      - $ref: '#/components/parameters/eventCode'
+      - $ref: '#/components/parameters/restHookCode'
+      responses:
+        '204':
+          description: REST hook deleted
+components:
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-API-KEY
+      description: 'Your organization''s API key. Must be sent alongside
+
+        `X-API-SECRET` on every request.
+
+        '
+    ApiSecretAuth:
+      type: apiKey
+      in: header
+      name: X-API-SECRET
+      description: 'Your organization''s API secret. Must be sent alongside
+
+        `X-API-KEY` on every request.
+
+        '
+  parameters:
+    organizationCode:
+      name: organizationCode
+      in: path
+      required: true
+      description: Unique alphanumeric code identifying your PheedLoop organization.
+        Found in your dashboard URL and API settings.
+      schema:
+        type: string
+      examples:
+        sample_organization_code:
+          value: ORGABCDE12345
+    eventCode:
+      name: eventCode
+      in: path
+      required: true
+      description: Unique code identifying a specific event within the organization.
+      schema:
+        type: string
+      examples:
+        sample_event_code:
+          value: EVETBCXWNLKBO
+    attendeeCode:
+      name: attendeeCode
+      in: path
+      required: true
+      description: Unique code identifying an attendee.
+      schema:
+        type: string
+      examples:
+        sample_attendee_code:
+          value: ATTWFKEQ75Q9D68SYNO333VZ0TG8
+    sessionCode:
+      name: sessionCode
+      in: path
+      required: true
+      description: Unique code identifying a session.
+      schema:
+        type: string
+      examples:
+        sample_session_code:
+          value: SES160BYRC13RHLX4
+    speakerCode:
+      name: speakerCode
+      in: path
+      required: true
+      description: Unique code identifying a speaker.
+      schema:
+        type: string
+    speakerTagCode:
+      name: speakerTagCode
+      in: path
+      required: true
+      description: Unique code identifying a speaker tag.
+      schema:
+        type: string
+    exhibitorCode:
+      name: exhibitorCode
+      in: path
+      required: true
+      description: Unique code identifying an exhibitor.
+      schema:
+        type: string
+    boothCode:
+      name: boothCode
+      in: path
+      required: true
+      description: Unique code identifying an exhibitor booth.
+      schema:
+        type: string
+      examples:
+        sample_booth_code:
+          value: EXHBOTHMIDYBXO7PVMZ2
+    sponsorCode:
+      name: sponsorCode
+      in: path
+      required: true
+      description: Unique code identifying a sponsor.
+      schema:
+        type: string
+    sponsorTierCode:
+      name: sponsorTierCode
+      in: path
+      required: true
+      description: Unique code identifying a sponsor tier.
+      schema:
+        type: string
+    announcementCode:
+      name: announcementCode
+      in: path
+      required: true
+      description: Unique code identifying an event announcement.
+      schema:
+        type: string
+    organizationAnnouncementCode:
+      name: organizationAnnouncementCode
+      in: path
+      required: true
+      description: Unique code identifying an organization-level announcement.
+      schema:
+        type: string
+    formatCode:
+      name: formatCode
+      in: path
+      required: true
+      description: Unique code identifying a session format.
+      schema:
+        type: string
+    memberCode:
+      name: memberCode
+      in: path
+      required: true
+      description: Unique code identifying a member.
+      schema:
+        type: string
+    membershipCode:
+      name: membershipCode
+      in: path
+      required: true
+      description: Unique code identifying a membership record.
+      schema:
+        type: string
+    memberOrganizationCode:
+      name: memberOrganizationCode
+      in: path
+      required: true
+      description: Unique code identifying a member organization.
+      schema:
+        type: string
+    restHookCode:
+      name: restHookCode
+      in: path
+      required: true
+      description: Unique code identifying a REST hook subscription.
+      schema:
+        type: string
+    fields:
+      name: fields
+      in: query
+      required: false
+      description: Comma-separated list of fields to include in the response. When
+        omitted, all available fields are returned.
+      schema:
+        type: string
+      examples:
+        sample_fields:
+          value: code,first_name,last_name,email
+    pageSize:
+      name: page_size
+      in: query
+      required: false
+      description: Number of records to return per page. Defaults to 10.
+      schema:
+        type: integer
+        default: 10
+        minimum: 1
+        maximum: 500
+      examples:
+        sample_page_size:
+          value: 50
+    page:
+      name: page
+      in: query
+      required: false
+      description: Page number to retrieve. Starts at 1.
+      schema:
+        type: integer
+        default: 1
+        minimum: 1
+      examples:
+        sample_page:
+          value: 1
+  responses:
+    BadRequest:
+      description: Bad request — one or more request parameters are invalid.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    Forbidden:
+      description: Forbidden — invalid or missing API credentials.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          examples:
+            sample_forbidden:
+              value:
+                detail: Authentication credentials were not provided.
+    NotFound:
+      description: Not found — the requested resource does not exist.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          examples:
+            sample_not_found:
+              value:
+                detail: Not found.
+  schemas:
+    ErrorResponse:
+      type: object
+      properties:
+        detail:
+          type: string
+          description: Human-readable error description.
+          examples:
+          - Authentication credentials were not provided.
+    PaginatedResponse:
+      type: object
+      properties:
+        count:
+          type: integer
+          description: Total number of records matching the query.
+        next:
+          type:
+          - string
+          - 'null'
+          description: URL for the next page of results, or null if on the last page.
+        previous:
+          type:
+          - string
+          - 'null'
+          description: URL for the previous page of results, or null if on the first
+            page.
+    AddressFields:
+      type: object
+      description: Reusable mailing address block.
+      properties:
+        address_line_1:
+          type: string
+          examples:
+          - 440 Terry Avenue North
+        address_line_2:
+          type: string
+          examples:
+          - Suite 200
+        address_city:
+          type: string
+          examples:
+          - Seattle
+        address_state:
+          type: string
+          examples:
+          - WA
+        address_zip:
+          type: string
+          examples:
+          - '98109'
+        address_country:
+          type: string
+          examples:
+          - United States
+        address_phone:
+          type: string
+          examples:
+          - 206-266-1000
+    SocialFields:
+      type: object
+      description: Reusable social media URL block.
+      properties:
+        website:
+          type: string
+          format: uri
+        twitter:
+          type: string
+          format: uri
+        youtube:
+          type: string
+          format: uri
+        facebook:
+          type: string
+          format: uri
+        linkedin:
+          type: string
+          format: uri
+        instagram:
+          type: string
+          format: uri
+    Event:
+      type: object
+      properties:
+        id:
+          type: string
+          readOnly: true
+        code:
+          type: string
+          readOnly: true
+          examples:
+          - EVETBCXWNLKBO
+        event_name:
+          type: string
+          examples:
+          - PheedLoop Summit 2025
+        description:
+          type: string
+        date:
+          type: string
+          format: date
+          examples:
+          - '2025-09-15'
+        end_date:
+          type: string
+          format: date
+          examples:
+          - '2025-09-17'
+        time_start:
+          type: string
+          examples:
+          - 09:00:00
+        time_end:
+          type: string
+          examples:
+          - '18:00:00'
+        timezone:
+          type: string
+          examples:
+          - America/Toronto
+        virtual_enabled:
+          type: boolean
+        custom_fields:
+          type: object
+    PaginatedEventList:
+      allOf:
+      - $ref: '#/components/schemas/PaginatedResponse'
+      - type: object
+        properties:
+          results:
+            type: array
+            items:
+              $ref: '#/components/schemas/Event'
+    AttendeeWrite:
+      type: object
+      description: Fields accepted when creating or updating an attendee.
+      properties:
+        email:
+          type: string
+          format: email
+          description: Attendee's email address. Required for create.
+          examples:
+          - jeffbezos@amazon.com
+        first_name:
+          type: string
+          examples:
+          - Jeff
+        last_name:
+          type: string
+          examples:
+          - Bezos
+        about:
+          type: string
+          description: Short biography or description.
+        title:
+          type: string
+          examples:
+          - CEO & Space Tourist
+        organization:
+          type: string
+          examples:
+          - Amazon
+        designations:
+          type: string
+          description: Pronouns or professional designations.
+          examples:
+          - He/Him
+        dietary_restrictions:
+          type: string
+        accessibility_requirements:
+          type: string
+        code_internal:
+          type: string
+          description: Your internal identifier for this attendee.
+        external_qr_code_url:
+          type: string
+          format: uri
+          description: Custom QR code URL for badge printing.
+        tags:
+          type: array
+          items:
+            type: string
+          description: Array of tag codes to apply.
+        send_app_welcome_email:
+          type: boolean
+          description: If true, sends the mobile app welcome email on creation.
+        send_attendee_portal_welcome:
+          type: boolean
+          description: If true, sends the attendee portal welcome email on creation.
+        metadata:
+          type: object
+          description: Arbitrary key-value pairs for custom data storage.
+        address_line_1:
+          type: string
+        address_line_2:
+          type: string
+        address_city:
+          type: string
+        address_state:
+          type: string
+        address_zip:
+          type: string
+        address_country:
+          type: string
+        address_phone:
+          type: string
+    Attendee:
+      allOf:
+      - type: object
+        properties:
+          code:
+            type: string
+            readOnly: true
+            description: Unique PheedLoop attendee code.
+            examples:
+            - ATTWFKEQ75Q9D68SYNO333VZ0TG8
+      - $ref: '#/components/schemas/AttendeeWrite'
+    PaginatedAttendeeList:
+      allOf:
+      - $ref: '#/components/schemas/PaginatedResponse'
+      - type: object
+        properties:
+          results:
+            type: array
+            items:
+              $ref: '#/components/schemas/Attendee'
+    SessionWrite:
+      type: object
+      properties:
+        title:
+          type: string
+          examples:
+          - Opening Keynote
+        sub_title:
+          type: string
+        about:
+          type: string
+        location:
+          type: string
+          description: Room or venue name for this session.
+        session_date:
+          type: string
+          format: date
+          examples:
+          - '2025-09-15'
+        start_time:
+          type: string
+          examples:
+          - 09:00:00
+        end_time:
+          type: string
+          examples:
+          - '10:00:00'
+        speakers:
+          type: array
+          items:
+            type: string
+          description: Array of speaker codes.
+        sponsors:
+          type: array
+          items:
+            type: string
+          description: Array of sponsor codes.
+        tags_restrict:
+          type: array
+          items:
+            type: string
+          description: Tag codes that restrict visibility to specific attendees.
+        formats:
+          type: array
+          items:
+            type: string
+          description: Session format codes.
+        tracks:
+          type: array
+          items:
+            type: string
+          description: Track names for this session.
+        audiences:
+          type: array
+          items:
+            type: string
+          description: Audience group names.
+        sub_sessions:
+          type: array
+          items:
+            type: string
+          description: Codes of child sessions nested under this one.
+        instructions:
+          type: string
+        credit_value:
+          type: number
+          format: float
+          description: Continuing education credit value.
+          examples:
+          - 1.0
+        authors:
+          type: string
+        is_channel:
+          type: boolean
+          description: If true, this session acts as a virtual streaming channel.
+    Session:
+      allOf:
+      - type: object
+        properties:
+          code:
+            type: string
+            readOnly: true
+            examples:
+            - SES160BYRC13RHLX4
+          event:
+            type: string
+            readOnly: true
+      - $ref: '#/components/schemas/SessionWrite'
+    PaginatedSessionList:
+      allOf:
+      - $ref: '#/components/schemas/PaginatedResponse'
+      - type: object
+        properties:
+          results:
+            type: array
+            items:
+              $ref: '#/components/schemas/Session'
+    SessionFormatWrite:
+      type: object
+      required:
+      - title
+      - color
+      properties:
+        title:
+          type: string
+          examples:
+          - Workshop
+        color:
+          type: string
+          description: Hex color code for UI display.
+          examples:
+          - '#007bff'
+    SessionFormat:
+      allOf:
+      - type: object
+        properties:
+          code:
+            type: string
+            readOnly: true
+      - $ref: '#/components/schemas/SessionFormatWrite'
+    SpeakerWrite:
+      type: object
+      properties:
+        first_name:
+          type: string
+          examples:
+          - Tim
+        last_name:
+          type: string
+          examples:
+          - Cook
+        email:
+          type: string
+          format: email
+          examples:
+          - timcook@apple.com
+        title:
+          type: string
+          examples:
+          - CEO
+        about:
+          type: string
+        organization:
+          type: string
+          examples:
+          - Apple
+        location:
+          type: string
+          examples:
+          - Cupertino
+        designations:
+          type: string
+          examples:
+          - He/Him
+        sessions:
+          type: array
+          items:
+            type: string
+          description: Session codes this speaker is assigned to.
+        tags:
+          type: array
+          items:
+            type: string
+    Speaker:
+      allOf:
+      - type: object
+        properties:
+          code:
+            type: string
+            readOnly: true
+          event:
+            type: string
+            readOnly: true
+      - $ref: '#/components/schemas/SpeakerWrite'
+    TagWrite:
+      type: object
+      required:
+      - title
+      - color
+      properties:
+        title:
+          type: string
+          examples:
+          - Keynote Speaker
+        color:
+          type: string
+          description: Hex color code.
+          examples:
+          - '#00ffff'
+        description:
+          type: string
+        order_num:
+          type: integer
+          description: Display order. Lower values appear first.
+          examples:
+          - 0
+    Tag:
+      allOf:
+      - type: object
+        properties:
+          code:
+            type: string
+            readOnly: true
+      - $ref: '#/components/schemas/TagWrite'
+    EventTag:
+      type: object
+      properties:
+        id:
+          type: string
+          readOnly: true
+        code:
+          type: string
+          readOnly: true
+        name:
+          type: string
+        event:
+          type: string
+        description:
+          type: string
+    ExhibitorWrite:
+      type: object
+      properties:
+        name:
+          type: string
+          examples:
+          - Acme Corp
+        tagline:
+          type: string
+        code_internal:
+          type: string
+        description:
+          type: string
+        email:
+          type: string
+          format: email
+        managers:
+          type: array
+          items:
+            type: string
+          description: Attendee codes of assigned exhibitor managers.
+        booths:
+          type: array
+          items:
+            type: string
+          description: Booth codes assigned to this exhibitor.
+        contact_primary:
+          type: string
+          description: Primary contact attendee code.
+        contact_secondary:
+          type: string
+          description: Secondary contact attendee code.
+        default_booth_area:
+          type: number
+        product_services:
+          type: array
+          items:
+            type: string
+        address_line_1:
+          type: string
+        address_line_2:
+          type: string
+        address_city:
+          type: string
+        address_state:
+          type: string
+        address_country:
+          type: string
+        address_zip:
+          type: string
+        address_phone_work:
+          type: string
+        address_phone_mobile:
+          type: string
+        website:
+          type: string
+          format: uri
+        twitter:
+          type: string
+          format: uri
+        youtube:
+          type: string
+          format: uri
+        facebook:
+          type: string
+          format: uri
+        linkedin:
+          type: string
+          format: uri
+        instagram:
+          type: string
+          format: uri
+    Exhibitor:
+      allOf:
+      - type: object
+        properties:
+          code:
+            type: string
+            readOnly: true
+          event:
+            type: string
+            readOnly: true
+      - $ref: '#/components/schemas/ExhibitorWrite'
+    ExhibitorBoothWrite:
+      type: object
+      required:
+      - booth_code
+      - area
+      properties:
+        booth_code:
+          type: string
+          description: Human-readable booth identifier (e.g., "101", "A-12").
+          examples:
+          - '101'
+        area:
+          type: number
+          description: Booth area in square feet or square metres.
+          examples:
+          - 200.0
+    ExhibitorBooth:
+      allOf:
+      - type: object
+        properties:
+          code:
+            type: string
+            readOnly: true
+      - $ref: '#/components/schemas/ExhibitorBoothWrite'
+    SponsorWrite:
+      type: object
+      properties:
+        name:
+          type: string
+          examples:
+          - Acme Corp
+        tagline:
+          type: string
+        code_internal:
+          type: string
+        description:
+          type: string
+        email:
+          type: string
+          format: email
+        contact_primary:
+          type: string
+        contact_secondary:
+          type: string
+        tiers:
+          type: array
+          items:
+            type: string
+          description: Sponsor tier codes.
+        address_line_1:
+          type: string
+        address_line_2:
+          type: string
+        address_city:
+          type: string
+        address_state:
+          type: string
+        address_country:
+          type: string
+        address_zip:
+          type: string
+        address_phone_work:
+          type: string
+        address_phone_mobile:
+          type: string
+        website:
+          type: string
+          format: uri
+        twitter:
+          type: string
+          format: uri
+        youtube:
+          type: string
+          format: uri
+        facebook:
+          type: string
+          format: uri
+        linkedin:
+          type: string
+          format: uri
+        instagram:
+          type: string
+          format: uri
+    Sponsor:
+      allOf:
+      - type: object
+        properties:
+          code:
+            type: string
+            readOnly: true
+          event:
+            type: string
+            readOnly: true
+      - $ref: '#/components/schemas/SponsorWrite'
+    SponsorTierWrite:
+      type: object
+      required:
+      - name
+      - color
+      properties:
+        name:
+          type: string
+          examples:
+          - Gold Tier
+        color:
+          type: string
+          examples:
+          - '#FFD700'
+        description:
+          type: string
+        order_num:
+          type: integer
+          examples:
+          - 1
+    SponsorTier:
+      allOf:
+      - type: object
+        properties:
+          code:
+            type: string
+            readOnly: true
+      - $ref: '#/components/schemas/SponsorTierWrite'
+    EventAnnouncementWrite:
+      type: object
+      properties:
+        title:
+          type: string
+          examples:
+          - Schedule Update
+        description:
+          type: string
+          examples:
+          - The afternoon keynote has moved to Hall B.
+        event:
+          type: string
+          description: Event code this announcement belongs to.
+        is_notification_mail:
+          type: boolean
+          description: Send via email.
+        is_notification_push:
+          type: boolean
+          description: Send via mobile push notification.
+        is_multiple_send_enabled:
+          type: boolean
+          description: Allow this announcement to be sent more than once.
+        is_released:
+          type: boolean
+          description: Whether the announcement is publicly visible.
+        is_visible_app:
+          type: boolean
+        is_visible_attendee:
+          type: boolean
+        is_visible_virtual:
+          type: boolean
+        is_visible_exhibitor:
+          type: boolean
+        is_visible_speaker:
+          type: boolean
+        is_visible_sponsor:
+          type: boolean
+        publis_date:
+          type: string
+          format: date
+          description: 'Scheduled publish date. Note: this field name contains a known
+            typo in the PheedLoop API (`publis_date` not `publish_date`).'
+        publish_time:
+          type:
+          - string
+          - 'null'
+        release_date:
+          type: string
+          format: date
+        release_time:
+          type:
+          - string
+          - 'null'
+        cta_text:
+          type: string
+          description: Call-to-action button label.
+        cta_link:
+          type: string
+          format: uri
+          description: Call-to-action URL.
+        is_credentials_included:
+          type: boolean
+        is_add_to_calendar:
+          type: boolean
+        is_ebadge_included:
+          type: boolean
+        tags:
+          type: array
+          items:
+            type: string
+        tickets:
+          type: array
+          items:
+            type: string
+    EventAnnouncement:
+      allOf:
+      - type: object
+        properties:
+          code:
+            type: string
+            readOnly: true
+      - $ref: '#/components/schemas/EventAnnouncementWrite'
+    OrgAnnouncementWrite:
+      type: object
+      properties:
+        title:
+          type: string
+          examples:
+          - Membership Renewal Reminder
+        description:
+          type: string
+        order_num:
+          type: integer
+        date:
+          type: string
+          format: date-time
+        cta_text:
+          type: string
+        cta_link:
+          type: string
+          format: uri
+        publish_date:
+          type: string
+          format: date
+        publish_time:
+          type: string
+        is_released:
+          type: boolean
+        is_credentials_included:
+          type: boolean
+        is_visible_attendee:
+          type: boolean
+        is_active:
+          type: boolean
+        is_notification_mail:
+          type: boolean
+        is_notification_push:
+          type: boolean
+        is_multiple_send_enabled:
+          type: boolean
+        event_targets:
+          type: array
+          items:
+            type: string
+          description: Event codes to target.
+        contact_groups:
+          type: array
+          items:
+            type: string
+        exclude_event_targets:
+          type: array
+          items:
+            type: string
+        membership_tiers_targets:
+          type: array
+          items:
+            type: string
+    MemberWrite:
+      type: object
+      properties:
+        email:
+          type: string
+          format: email
+        first_name:
+          type: string
+        last_name:
+          type: string
+        about:
+          type: string
+        title:
+          type: string
+        organization:
+          type: string
+        designations:
+          type: string
+        dietary_restrictions:
+          type: string
+        accessibility_requirements:
+          type: string
+        code_internal:
+          type: string
+        tags:
+          type: array
+          items:
+            type: string
+        metadata:
+          type: object
+        address_line_1:
+          type: string
+        address_line_2:
+          type: string
+        address_city:
+          type: string
+        address_state:
+          type: string
+        address_zip:
+          type: string
+        address_country:
+          type: string
+        address_phone:
+          type: string
+    Member:
+      allOf:
+      - type: object
+        properties:
+          code:
+            type: string
+            readOnly: true
+      - $ref: '#/components/schemas/MemberWrite'
+    MembershipWrite:
+      type: object
+      properties:
+        first_name:
+          type: string
+        last_name:
+          type: string
+        email:
+          type: string
+          format: email
+        membership_tier:
+          type: string
+          description: Membership tier code.
+        date_start:
+          type: string
+          format: date
+          examples:
+          - '2025-01-01'
+        date_expiry:
+          type: string
+          format: date
+          examples:
+          - '2025-12-31'
+        is_active:
+          type: boolean
+        title:
+          type: string
+        notes:
+          type: string
+        send_confirmation:
+          type: boolean
+          description: Send a confirmation email on creation.
+        unassigned:
+          type: boolean
+          description: If true, creates the membership without assigning it to a specific
+            member (can be assigned later).
+        attendee_organization:
+          type: string
+    Membership:
+      allOf:
+      - type: object
+        properties:
+          code:
+            type: string
+            readOnly: true
+      - $ref: '#/components/schemas/MembershipWrite'
+    MemberOrganizationWrite:
+      type: object
+      properties:
+        name:
+          type: string
+          examples:
+          - PheedLoop Inc
+        internal_code:
+          type: string
+          examples:
+          - ORG101
+        payment_code_prefix:
+          type: string
+        tax:
+          type: number
+        managers:
+          type: array
+          items:
+            type: string
+        address_line_1:
+          type: string
+        address_line_2:
+          type: string
+        address_city:
+          type: string
+        address_state:
+          type: string
+        address_country:
+          type: string
+        address_zip:
+          type: string
+        address_phone_work:
+          type: string
+        website:
+          type: string
+          format: uri
+        notes:
+          type: string
+        extra:
+          type: object
+    RestHookWrite:
+      type: object
+      required:
+      - action
+      - endpoint
+      properties:
+        action:
+          type: string
+          description: Platform event to subscribe to.
+          examples:
+          - registration.created
+          enum:
+          - registration.created
+          - attendee.updated
+          - session.created
+          - checkin.created
+        endpoint:
+          type: string
+          format: uri
+          description: HTTPS URL that PheedLoop will POST to when the action fires.
+            The endpoint must return a 2xx response within 10 seconds.
+          examples:
+          - https://hooks.zapier.com/hooks/catch/example/
+    RestHook:
+      allOf:
+      - type: object
+        properties:
+          id:
+            type: string
+            readOnly: true
+            description: Unique hook identifier.
+      - $ref: '#/components/schemas/RestHookWrite'
+security:
+- ApiKeyAuth: []
+  ApiSecretAuth: []
+tags:
+- name: Authentication
+  description: Validate API credentials before making requests.
+- name: Events
+  description: Retrieve and update event configuration and details.
+- name: Attendees
+  description: Create, read, update, and delete event attendees. Supports single and
+    bulk operations.
+- name: Event Attendance
+  description: Manage attendee check-in and check-out records for an event.
+- name: Sessions
+  description: 'Manage the event agenda: sessions, registrations, and session-level
+    attendance.'
+- name: Session Formats
+  description: Define session format labels (e.g., Workshop, Panel, Keynote) with
+    associated colors for display.
+- name: Speakers
+  description: Manage speaker profiles and their session assignments.
+- name: Speaker Tags
+  description: Create and manage tags applied to speaker profiles.
+- name: Exhibitors
+  description: Manage exhibiting company profiles and their booth assignments.
+- name: Exhibitor Booths
+  description: Manage booth records for exhibitors.
+- name: Sponsors
+  description: Manage sponsor company profiles and tier assignments.
+- name: Sponsor Tiers
+  description: Define sponsorship tiers (e.g., Gold, Silver, Bronze) with colors.
+- name: Announcements
+  description: Create and distribute announcements at the event or organization level
+    via email and push notification.
+- name: Tags
+  description: Read event-level tags for filtering and categorization.
+- name: Registrations
+  description: Read registration and ticket purchase records.
+- name: Tickets
+  description: Read ticket type definitions.
+- name: Ticket Transfer Logs
+  description: Read logs of ticket ownership transfers.
+- name: Surcharges
+  description: Read event surcharge configurations.
+- name: Promotions
+  description: Read promotional code definitions for registrations, exhibitors, and
+    sponsors.
+- name: Members
+  description: Manage organization-level member contacts. Supports single and bulk
+    operations, plus email-to-code conversion.
+- name: Memberships
+  description: Manage membership records, including assignment to members.
+- name: Member Organizations
+  description: Manage company/organization records within the membership system.
+- name: Reports
+  description: Retrieve paginated data exports from pre-configured reports.
+- name: REST Hooks
+  description: Subscribe external endpoints to PheedLoop platform events. Webhooks
+    are scoped per event.
+externalDocs:
+  description: PheedLoop API reference and developer documentation
+  url: https://develop.pheedloop.com/docs/
+
